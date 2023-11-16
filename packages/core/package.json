@@ -1,0 +1,25 @@
+{
+  "name": "core",
+  "version": "0.0.0",
+  "description": "test",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "test": "mocha",
+    "build": "tsc --project tsconfig.json",
+    "prepublishOnly": "yarn test && yarn build",
+    "lint": "eslint src/** --fix --no-error-on-unmatched-pattern"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.4",
+    "@types/n3": "^1.16.4",
+    "mocha": "^10.2.0",
+    "ts-node": "^10.9.1"
+  },
+  "dependencies": {
+    "n3": "^1.17.2"
+  }
+}
