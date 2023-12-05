@@ -1,0 +1,7 @@
+@prefix solid: <http://www.w3.org/ns/solid/terms#>.
+
+<> a solid:TypeIndex, solid:ListedDocument;
+    <http://purl.org/dc/terms/references> <#hospex>.
+<#hospex> a solid:TypeRegistration;
+    solid:forClass <http://w3id.org/hospex/ns#PersonalHospexDocument>;
+    solid:instance </hospex/community-example/card>, </hospex/community-other/card>.

@@ -3,5 +3,5 @@
   "compilerOptions": {
     "outDir": "./dist"
   },
-  "include": ["./src", "./test", "./experiment"]
+  "include": ["./src", "./test"]
 }

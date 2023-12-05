@@ -1,17 +1,8 @@
-import { BlankNode, Literal, NamedNode, Quad, Store, Variable } from 'n3'
+import type { QueryAndStore } from './QueryAndStore'
 
-// as input, we expect array of RDF quads where "graph" part is the filename. This must be prepared beforehand.
-type VariableDict = {
-  [key: string]: (Quad | NamedNode | Literal | BlankNode | Variable)[]
-}
+export type TransformStore = (qas: QueryAndStore) => void
 
-type TransformStore = (
-  store: Store,
-  variables: VariableDict,
-  addResource: (resource: string) => void,
-) => void
-
-type Match = {
+export type Match = {
   type: 'match'
   subject?: string
   predicate?: string
@@ -23,14 +14,3 @@ type Match = {
 
 type AddResources = { type: 'add resources'; variable: `?${string}` }
 export type RdfQuery = (TransformStore | Match | AddResources)[]
-
-/**
- * ??
- */
-export const followNose = (query: RdfQuery) => {
-  const store = new Store()
-
-  query
-
-  store.addQuads([])
-}

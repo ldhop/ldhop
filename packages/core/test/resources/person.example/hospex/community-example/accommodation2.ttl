@@ -1,0 +1,3 @@
+@prefix hospex: <http://w3id.org/hospex/ns#>.
+
+<#accommodation> a hospex:Accommodation.

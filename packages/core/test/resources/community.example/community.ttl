@@ -1,0 +1,4 @@
+<#us> a <http://w3id.org/hospex/ns#Community>, <http://rdfs.org/sioc/ns#Community>;
+    <http://rdfs.org/sioc/ns#name> "test"@en;
+    <http://rdfs.org/sioc/ns#about> "about in english"@en;
+    <http://rdfs.org/sioc/ns#has_usergroup> <https://community.example/group#us>.

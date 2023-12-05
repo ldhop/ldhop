@@ -1,0 +1,3 @@
+<#us> a <http://rdfs.org/sioc/ns#Usergroup>, <http://www.w3.org/2006/vcard/ns#Group>;
+    <http://rdfs.org/sioc/ns#usergroup_of> <https://community.example/community#us>;
+    <http://www.w3.org/2006/vcard/ns#hasMember> <https://person.example/profile/card#me>, <https://person2.example/profile/card#me>, <https://person3.example/profile/card#me>.
