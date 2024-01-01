@@ -1,6 +1,6 @@
 {
   "name": "css-authn",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Authenticate to CommunitySolidServer using its API",
   "homepage": "",
   "license": "MIT",
