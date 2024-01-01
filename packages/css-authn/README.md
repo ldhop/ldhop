@@ -7,7 +7,7 @@ Supported versions are 6.x and 7.x
 ## Usage
 
 ```ts
-import { getAuthenticatedFetch, createAccount } from 'css-authn/7'
+import { getAuthenticatedFetch, createAccount } from 'css-authn/dist/7.x'
 
 // the methods return a Promise, so you can wrap them in async function, and await them...
 // get authenticated fetch

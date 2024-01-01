@@ -1,16 +1,15 @@
 {
   "name": "css-authn",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Authenticate to CommunitySolidServer using its API",
   "homepage": "",
   "license": "MIT",
-  "exports": "./dist/index.js",
+  "main": "dist/index.js",
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
-    "prepublish": "yarn build"
+    "build": "tsc"
   },
   "dependencies": {
     "@inrupt/solid-client-authn-core": "^1.17.5",
