@@ -1,12 +1,12 @@
 {
   "name": "css-authn",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Authenticate to CommunitySolidServer using its API",
   "homepage": "",
   "license": "MIT",
   "exports": {
-    "./6": "./dist/6.x",
-    "./7": "./dist/7.x"
+    "./6.js": "./dist/6.x",
+    "./7.js": "./dist/7.x"
   },
   "scripts": {
     "build": "tsc",
