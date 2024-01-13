@@ -12,6 +12,8 @@ type AccountHandles = {
   }
 }
 
+type Fetch = typeof globalThis.fetch
+
 export const getAuthenticatedFetch = async ({
   provider,
   email,
@@ -23,7 +25,7 @@ export const getAuthenticatedFetch = async ({
   email: string
   password: string
   webId?: string
-  fetch?: typeof globalThis.fetch
+  fetch?: Fetch
 }) => {
   // log in first
 
@@ -172,7 +174,7 @@ export const createAccount = async ({
   password?: string
   email?: string
   provider: string
-  fetch?: typeof globalThis.fetch
+  fetch?: Fetch
 }) => {
   password ??= 'correcthorsebatterystaple'
   email ??= username + '@example.org'

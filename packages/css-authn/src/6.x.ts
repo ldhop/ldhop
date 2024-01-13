@@ -5,6 +5,8 @@ import {
   generateDpopKeyPair,
 } from '@inrupt/solid-client-authn-core'
 
+type Fetch = typeof globalThis.fetch
+
 // https://communitysolidserver.github.io/CommunitySolidServer/6.x/usage/client-credentials/#generating-a-token
 export const generateToken = async ({
   provider,
@@ -17,7 +19,7 @@ export const generateToken = async ({
   email: string
   password: string
   tokenName?: string
-  fetch?: typeof globalThis.fetch
+  fetch?: Fetch
 }) => {
   // This assumes your server is started under http://localhost:3000/.
   // This URL can also be found by checking the controls in JSON responses when interacting with the IDP API,
@@ -56,7 +58,7 @@ export const requestAccessToken = async ({
   provider: string
   id: string
   secret: string
-  fetch?: typeof globalThis.fetch
+  fetch?: Fetch
 }) => {
   // A key pair is needed for encryption.
   // This function from `solid-client-authn` generates such a pair for you.
@@ -104,7 +106,7 @@ export const authenticateFetch = async ({
 }: {
   dpopKey: KeyPair
   accessToken: string
-  fetch?: typeof globalThis.fetch
+  fetch?: Fetch
 }) => {
   // The DPoP key needs to be the same key as the one used in the previous step.
   // The Access token is the one generated in the previous step.
@@ -124,7 +126,7 @@ export const getAuthenticatedFetch = async ({
   provider: string
   email: string
   password: string
-  fetch?: typeof globalThis.fetch
+  fetch?: Fetch
 }) => {
   const { id, secret } = await generateToken({
     provider,
