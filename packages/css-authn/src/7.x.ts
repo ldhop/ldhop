@@ -17,7 +17,7 @@ export const getAuthenticatedFetch = async ({
   email,
   password,
   webId,
-  fetch = globalThis.fetch,
+  fetch: customFetch = globalThis.fetch,
 }: {
   provider: string
   email: string
@@ -27,12 +27,12 @@ export const getAuthenticatedFetch = async ({
 }) => {
   // log in first
 
-  const handlesResponse = await fetch(provider + '/.account/')
+  const handlesResponse = await customFetch(provider + '/.account/')
   await throwIfResponseNotOk(handlesResponse)
 
   const handles = (await handlesResponse.json()) as AccountHandles
 
-  const loginResponse = await fetch(handles.controls.password.login, {
+  const loginResponse = await customFetch(handles.controls.password.login, {
     method: 'post',
     body: JSON.stringify({ email, password }),
     headers: { 'content-type': 'application/json' },
@@ -53,7 +53,7 @@ export const getAuthenticatedFetch = async ({
   // This assumes your server is started under http://localhost:3000/.
   // It also assumes you have already logged in and `cookie` contains a valid cookie header
   // as described in the API documentation.
-  const indexResponse = await fetch(provider + '/.account/', {
+  const indexResponse = await customFetch(provider + '/.account/', {
     headers: { cookie },
   })
 
@@ -63,7 +63,7 @@ export const getAuthenticatedFetch = async ({
 
   // now let's get all available webIds
 
-  const webIdsResponse = await fetch(controls.account.webId, {
+  const webIdsResponse = await customFetch(controls.account.webId, {
     headers: { cookie },
   })
 
@@ -88,7 +88,7 @@ export const getAuthenticatedFetch = async ({
 
   const linkedWebId = getWebId(webIds, webId)
 
-  const response = await fetch(controls.account.clientCredentials, {
+  const response = await customFetch(controls.account.clientCredentials, {
     method: 'POST',
     headers: { cookie, 'content-type': 'application/json' },
     // The name field will be used when generating the ID of your token.
@@ -123,7 +123,7 @@ export const getAuthenticatedFetch = async ({
   // http://localhost:3000/.well-known/openid-configuration
   // if your server is hosted at http://localhost:3000/.
   const tokenUrl = provider + '/.oidc/token'
-  const response2 = await fetch(tokenUrl, {
+  const response2 = await customFetch(tokenUrl, {
     method: 'POST',
     headers: {
       // The header needs to be in base64 encoding.
@@ -166,7 +166,7 @@ export const createAccount = async ({
   password,
   email,
   provider,
-  fetch = globalThis.fetch,
+  fetch: customFetch = globalThis.fetch,
 }: {
   username: string
   password?: string
@@ -188,7 +188,7 @@ export const createAccount = async ({
   const accountEndpoint = provider + '/.account/account/'
 
   // create the account
-  const response = await fetch(accountEndpoint, { method: 'post' })
+  const response = await customFetch(accountEndpoint, { method: 'post' })
   await throwIfResponseNotOk(response)
 
   const jar = new tough.CookieJar()
@@ -199,24 +199,27 @@ export const createAccount = async ({
   await jar.setCookie(accountCookie, provider)
 
   // get account handles
-  const response2 = await fetch(provider + '/.account/', {
+  const response2 = await customFetch(provider + '/.account/', {
     headers: { cookie: await jar.getCookieString(provider) },
   })
   await throwIfResponseNotOk(response2)
 
   const handles = (await response2.json()) as AccountHandles
 
-  const createLoginResponse = await fetch(handles.controls.password.create, {
-    method: 'post',
-    body: JSON.stringify({ email, password, confirmPassword: password }),
-    headers: {
-      'content-type': 'application/json',
-      cookie: await jar.getCookieString(handles.controls.password.create),
+  const createLoginResponse = await customFetch(
+    handles.controls.password.create,
+    {
+      method: 'post',
+      body: JSON.stringify({ email, password, confirmPassword: password }),
+      headers: {
+        'content-type': 'application/json',
+        cookie: await jar.getCookieString(handles.controls.password.create),
+      },
     },
-  })
+  )
   await throwIfResponseNotOk(createLoginResponse)
 
-  const response3 = await fetch(handles.controls.account.pod, {
+  const response3 = await customFetch(handles.controls.account.pod, {
     method: 'post',
     headers: {
       cookie: await jar.getCookieString(handles.controls.account.pod),

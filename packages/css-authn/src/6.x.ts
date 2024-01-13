@@ -11,7 +11,7 @@ export const generateToken = async ({
   email,
   password,
   tokenName = 'my-token',
-  fetch = globalThis.fetch,
+  fetch: customFetch = globalThis.fetch,
 }: {
   provider: string
   email: string
@@ -22,7 +22,7 @@ export const generateToken = async ({
   // This assumes your server is started under http://localhost:3000/.
   // This URL can also be found by checking the controls in JSON responses when interacting with the IDP API,
   // as described in the Identity Provider section.
-  const response = await fetch(`${provider}/idp/credentials/`, {
+  const response = await customFetch(`${provider}/idp/credentials/`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     // The email/password fields are those of your account.
@@ -51,7 +51,7 @@ export const requestAccessToken = async ({
   provider,
   id,
   secret,
-  fetch = globalThis.fetch,
+  fetch: customFetch = globalThis.fetch,
 }: {
   provider: string
   id: string
@@ -69,7 +69,7 @@ export const requestAccessToken = async ({
   // http://localhost:3000/.well-known/openid-configuration
   // if your server is hosted at http://localhost:3000/.
   const tokenUrl = `${provider}/.oidc/token`
-  const response = await fetch(tokenUrl, {
+  const response = await customFetch(tokenUrl, {
     method: 'POST',
     headers: {
       // The header needs to be in base64 encoding.
@@ -100,7 +100,7 @@ export const requestAccessToken = async ({
 export const authenticateFetch = async ({
   dpopKey,
   accessToken,
-  fetch = globalThis.fetch,
+  fetch: customFetch = globalThis.fetch,
 }: {
   dpopKey: KeyPair
   accessToken: string
@@ -108,7 +108,7 @@ export const authenticateFetch = async ({
 }) => {
   // The DPoP key needs to be the same key as the one used in the previous step.
   // The Access token is the one generated in the previous step.
-  const authFetch = await buildAuthenticatedFetch(fetch, accessToken, {
+  const authFetch = await buildAuthenticatedFetch(customFetch, accessToken, {
     dpopKey,
   })
   // authFetch can now be used as a standard fetch function that will authenticate as your WebID.
@@ -119,7 +119,7 @@ export const getAuthenticatedFetch = async ({
   provider,
   email,
   password,
-  fetch = globalThis.fetch,
+  fetch: customFetch = globalThis.fetch,
 }: {
   provider: string
   email: string
@@ -130,16 +130,20 @@ export const getAuthenticatedFetch = async ({
     provider,
     email,
     password,
-    fetch,
+    fetch: customFetch,
   })
   const { dpopKey, accessToken } = await requestAccessToken({
     provider,
     id,
     secret,
-    fetch,
+    fetch: customFetch,
   })
 
-  const authenticatedFetch = authenticateFetch({ dpopKey, accessToken, fetch })
+  const authenticatedFetch = authenticateFetch({
+    dpopKey,
+    accessToken,
+    fetch: customFetch,
+  })
 
   return authenticatedFetch
 }
