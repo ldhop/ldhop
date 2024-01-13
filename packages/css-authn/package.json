@@ -1,6 +1,6 @@
 {
   "name": "css-authn",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "Authenticate to CommunitySolidServer using its API",
   "homepage": "https://github.com/OpenHospitalityNetwork/ldfyn/tree/main/packages/css-authn",
   "repository": {
