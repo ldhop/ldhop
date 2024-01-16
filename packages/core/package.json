@@ -1,6 +1,6 @@
 {
   "name": "@ldhop/core",
-  "version": "0.0.0-alpha.0",
+  "version": "0.0.0-alpha.1",
   "description": "test",
   "license": "MIT",
   "main": "dist/index.js",
@@ -22,10 +22,10 @@
     "lodash": "^4.17.21",
     "mocha": "^10.2.0",
     "rdf-namespaces": "^1.12.0",
-    "ts-node": "^10.9.1",
-    "utility-types": "^3.10.0"
+    "ts-node": "^10.9.1"
   },
   "dependencies": {
-    "n3": "^1.17.2"
+    "n3": "^1.17.2",
+    "utility-types": "^3.10.0"
   }
 }
