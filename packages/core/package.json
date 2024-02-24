@@ -1,7 +1,12 @@
 {
   "name": "@ldhop/core",
-  "version": "0.0.0-alpha.1",
-  "description": "test",
+  "version": "0.0.0-alpha.2",
+  "description": "Follow your nose through linked data resources - core",
+  "homepage": "https://github.com/ldhop/ldhop/tree/main/packages/core",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ldhop/ldhop.git"
+  },
   "license": "MIT",
   "main": "dist/index.js",
   "publishConfig": {

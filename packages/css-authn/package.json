@@ -1,11 +1,11 @@
 {
   "name": "css-authn",
-  "version": "0.0.14",
+  "version": "0.0.15-alpha.0",
   "description": "Authenticate to CommunitySolidServer using its API",
-  "homepage": "https://github.com/OpenHospitalityNetwork/ldfyn/tree/main/packages/css-authn",
+  "homepage": "https://github.com/ldhop/ldhop/tree/main/packages/css-authn",
   "repository": {
     "type": "git",
-    "url": "https://github.com/OpenHospitalityNetwork/ldfyn.git"
+    "url": "https://github.com/ldhop/ldhop.git"
   },
   "license": "MIT",
   "main": "dist/index.js",

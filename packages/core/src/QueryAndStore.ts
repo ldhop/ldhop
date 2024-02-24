@@ -9,6 +9,15 @@ type Move = { from: Variables; to: Variables; step: number; quad?: Quad }
 
 const stringifyQuad = (quad: Quad) => JSON.stringify(quad.toJSON())
 
+const meta = {
+  meta: 'https://ldhop.example/meta',
+  status: 'https://ldhop.example/status',
+  missing: 'https://ldhop.example/status/missing',
+  added: 'https://ldhop.example/status/added',
+  resource: 'https://ldhop.example/resource',
+  variable: 'https://ldhop.example/variable',
+}
+
 class Moves {
   list: Set<Move> = new Set()
   provides: { [key: string]: Set<Move> } = {}
@@ -80,9 +89,9 @@ export class QueryAndStore {
 
   getMissingResources() {
     const matches = this.store.getSubjects(
-      new NamedNode('https://ldfyn.example/status'),
-      new NamedNode('https://ldfyn.example/status/missing'),
-      new NamedNode('https://ldfyn.example/meta'),
+      new NamedNode(meta.status),
+      new NamedNode(meta.missing),
+      new NamedNode(meta.meta),
     )
 
     return matches.map(m => m.value)
@@ -112,9 +121,9 @@ export class QueryAndStore {
           const has = this.store.has(
             new Quad(
               quad.subject,
-              new NamedNode('https://ldfyn.example/variable'),
-              new NamedNode('https://ldfyn.example/variable/' + variableName),
-              new NamedNode('https://ldfyn.example/meta'),
+              new NamedNode(meta.variable),
+              new NamedNode(meta.variable + '/' + variableName),
+              new NamedNode(meta.meta),
             ),
           )
 
@@ -134,24 +143,24 @@ export class QueryAndStore {
     this.store.removeQuads([
       new Quad(
         uriNode,
-        new NamedNode('https://ldfyn.example/variable'),
-        new NamedNode('https://ldfyn.example/variable/' + variable),
-        new NamedNode('https://ldfyn.example/meta'),
+        new NamedNode(meta.variable),
+        new NamedNode(meta.variable + '/' + variable),
+        new NamedNode(meta.meta),
       ),
       new Quad(
         uriNode,
-        new NamedNode('https://ldfyn.example/resource'),
+        new NamedNode(meta.resource),
         resourceNode,
-        new NamedNode('https://ldfyn.example/meta'),
+        new NamedNode(meta.meta),
       ),
     ])
 
     this.store.removeQuads(
       this.store.getQuads(
         resourceNode,
-        new NamedNode('https://ldfyn.example/status'),
+        new NamedNode(meta.status),
         null,
-        new NamedNode('https://ldfyn.example/meta'),
+        new NamedNode(meta.meta),
       ),
     )
 
@@ -200,15 +209,15 @@ export class QueryAndStore {
     // mark the resource as added
     this.store.removeQuad(
       new NamedNode(removeHashFromURI(resource)),
-      new NamedNode('https://ldfyn.example/status'),
-      new NamedNode('https://ldfyn.example/status/missing'),
-      new NamedNode('https://ldfyn.example/meta'),
+      new NamedNode(meta.status),
+      new NamedNode(meta.missing),
+      new NamedNode(meta.meta),
     )
     this.store.addQuad(
       new NamedNode(removeHashFromURI(resource)),
-      new NamedNode('https://ldfyn.example/status'),
-      new NamedNode('https://ldfyn.example/status/added'),
-      new NamedNode('https://ldfyn.example/meta'),
+      new NamedNode(meta.status),
+      new NamedNode(meta.added),
+      new NamedNode(meta.meta),
     )
   }
 
@@ -277,10 +286,8 @@ export class QueryAndStore {
           ? intersection(
               this.store
                 .getSubjects(
-                  new NamedNode('https://ldfyn.example/variable'),
-                  new NamedNode(
-                    'https://ldfyn.example/variable/' + definition.slice(1),
-                  ),
+                  new NamedNode(meta.variable),
+                  new NamedNode(meta.variable + '/' + definition.slice(1)),
                   null,
                 )
                 .map(s => s.value),
@@ -364,32 +371,32 @@ export class QueryAndStore {
       // add the new variable
       new Quad(
         uriNode,
-        new NamedNode('https://ldfyn.example/variable'),
-        new NamedNode('https://ldfyn.example/variable/' + variable),
-        new NamedNode('https://ldfyn.example/meta'),
+        new NamedNode(meta.variable),
+        new NamedNode(meta.variable + '/' + variable),
+        new NamedNode(meta.meta),
       ),
       // make a resource
       new Quad(
         uriNode,
-        new NamedNode('https://ldfyn.example/resource'),
+        new NamedNode(meta.resource),
         resourceNode,
-        new NamedNode('https://ldfyn.example/meta'),
+        new NamedNode(meta.meta),
       ),
     ])
 
     if (
       this.store.match(
         resourceNode,
-        new NamedNode('https://ldfyn.example/status'),
+        new NamedNode(meta.status),
         null,
-        new NamedNode('https://ldfyn.example/meta'),
+        new NamedNode(meta.meta),
       ).size === 0
     ) {
       this.store.addQuad(
         resourceNode,
-        new NamedNode('https://ldfyn.example/status'),
-        new NamedNode('https://ldfyn.example/status/missing'),
-        new NamedNode('https://ldfyn.example/meta'),
+        new NamedNode(meta.status),
+        new NamedNode(meta.missing),
+        new NamedNode(meta.meta),
       )
     }
   }
@@ -400,8 +407,8 @@ export class QueryAndStore {
   getVariable(variableName: string) {
     return this.store
       .getSubjects(
-        new NamedNode('https://ldfyn.example/variable'),
-        new NamedNode('https://ldfyn.example/variable/' + variableName),
+        new NamedNode(meta.variable),
+        new NamedNode(meta.variable + '/' + variableName),
         null,
       )
       .map(s => s.value)
@@ -409,12 +416,7 @@ export class QueryAndStore {
 
   getAllVariables() {
     return this.store
-      .getQuads(
-        null,
-        new NamedNode('https://ldfyn.example/variable'),
-        null,
-        null,
-      )
+      .getQuads(null, new NamedNode(meta.variable), null, null)
       .reduce((dict: { [key: string]: Set<string> }, quad) => {
         dict[quad.object.value.split('/').pop() as string] ??= new Set<string>()
         dict[quad.object.value.split('/').pop() as string].add(
