@@ -1,6 +1,6 @@
 {
   "name": "@ldhop/core",
-  "version": "0.0.0-alpha.2",
+  "version": "0.0.0-alpha.3",
   "description": "Follow your nose through linked data resources - core",
   "homepage": "https://github.com/ldhop/ldhop/tree/main/packages/core",
   "repository": {
@@ -9,12 +9,17 @@
   },
   "license": "MIT",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
     "test": "mocha",
-    "build": "tsc",
+    "build": "rm -rf dist && tsc",
     "prepublishOnly": "yarn test && yarn build",
     "lint": "eslint src/** --fix --no-error-on-unmatched-pattern"
   },

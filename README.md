@@ -1,4 +1,4 @@
-# ldhop - Follow your nose through Linked Data resources
+# LDhop - Follow Your Nose Through Linked Data Resources
 
 Start with a resource, and then follow your nose through the Knowledge graph, discover and fetch new resources, and keep following your nose
 

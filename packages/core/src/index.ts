@@ -1,4 +1,5 @@
 import type { QueryAndStore } from './QueryAndStore'
+export { QueryAndStore } from './QueryAndStore'
 
 export type TransformStore = (qas: QueryAndStore) => void
 
