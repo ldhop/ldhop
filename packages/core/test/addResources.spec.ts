@@ -2,6 +2,7 @@ import { expect } from 'chai'
 import { QueryAndStore } from '../src/QueryAndStore'
 import {
   communityAccommodationsQuery,
+  personAccommodationQuery2,
   personAccommodationsQuery,
 } from './queries'
 import { fetchRdf } from './resources'
@@ -41,6 +42,19 @@ describe('Adding resources to QueryAndStore', () => {
 
   it("should make steps through person's profile and find all accommodation offers of the community", () => {
     const qas = new QueryAndStore(personAccommodationsQuery, {
+      person: new Set(['https://person.example/profile/card#me']),
+      community: new Set(['https://community.example/community#us']),
+    })
+
+    run(qas)
+
+    const offers = qas.getVariable('offer')
+
+    expect(offers).to.have.length(2)
+  })
+
+  it("should make steps through person's profile and find all accommodation offers of the community (2)", () => {
+    const qas = new QueryAndStore(personAccommodationQuery2, {
       person: new Set(['https://person.example/profile/card#me']),
       community: new Set(['https://community.example/community#us']),
     })

@@ -283,7 +283,9 @@ export class QueryAndStore {
       const definition = step[quadElement]
       if (definition) {
         config[quadElement] = definition.startsWith('?')
-          ? intersection(
+          ? // exchange variable to URIs on given position within current resource
+            intersection(
+              // URIs in variable
               this.store
                 .getSubjects(
                   new NamedNode(meta.variable),
@@ -291,15 +293,16 @@ export class QueryAndStore {
                   null,
                 )
                 .map(s => s.value),
-              this.store[
-                quadElement === 'subject'
-                  ? 'getSubjects'
-                  : quadElement === 'predicate'
-                    ? 'getPredicates'
-                    : quadElement === 'object'
-                      ? 'getObjects'
-                      : 'getGraphs'
-              ](null, null, new NamedNode(resource)).map(x => x.value),
+              // URIs at given position within resource
+              quadElement === 'graph'
+                ? [resource]
+                : this.store[
+                    quadElement === 'subject'
+                      ? 'getSubjects'
+                      : quadElement === 'predicate'
+                        ? 'getPredicates'
+                        : 'getObjects'
+                  ](null, null, new NamedNode(resource)).map(x => x.value),
             )
           : [definition]
       }

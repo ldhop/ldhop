@@ -97,3 +97,19 @@ export const friendOfAFriendQuery: RdfQuery = [
     target: '?person',
   },
 ]
+
+const personAccommodationQuery2 = [...personAccommodationsQuery].filter(
+  step => typeof step !== 'function',
+)
+const offerIndex = personAccommodationQuery2.findIndex(
+  step => 'target' in step && step.target === '?offer',
+)
+personAccommodationQuery2[offerIndex] = {
+  type: 'match',
+  subject: '?person',
+  predicate: 'http://w3id.org/hospex/ns#offers',
+  graph: '?hospexDocumentForCommunity',
+  pick: 'object',
+  target: '?offer',
+}
+export { personAccommodationQuery2 }
