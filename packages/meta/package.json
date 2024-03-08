@@ -1,0 +1,15 @@
+{
+  "name": "ldhop",
+  "version": "0.0.0-alpha.0",
+  "description": "A meta package for @ldhop",
+  "homepage": "https://github.com/ldhop/ldhop/tree/main/packages/meta",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ldhop/ldhop.git"
+  },
+  "license": "MIT",
+  "private": false,
+  "dependencies": {
+    "@ldhop/core": "^0.0.0-alpha.4"
+  }
+}
