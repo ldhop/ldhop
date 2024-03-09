@@ -1,6 +1,6 @@
 import { differenceWith, intersection } from 'lodash'
 import { NamedNode, Quad, Store } from 'n3'
-import { Match, RdfQuery, TransformStore } from '../src'
+import { Match, RdfQuery, TransformStore } from '.'
 import { removeHashFromURI } from './utils/helpers'
 
 type Variables = { [key: string]: Set<string> }
