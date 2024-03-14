@@ -1,6 +1,6 @@
 {
   "name": "@ldhop/react",
-  "version": "0.0.0-alpha.1",
+  "version": "0.0.0-alpha.5-react",
   "description": "Follow your nose through linked data resources - for React",
   "keywords": [
     "query",
@@ -37,7 +37,7 @@
     "@ldhop/core": "^0.0.1-alpha.1"
   },
   "devDependencies": {
-    "@tanstack/react-query": "^5.25.0",
+    "@tanstack/react-query": "^5.28.4",
     "@types/react": "^18.2.64",
     "react": "^18.2.0"
   },
