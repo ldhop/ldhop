@@ -1,0 +1,8 @@
+@prefix dc: <http://purl.org/dc/terms/>.
+@prefix ldp: <http://www.w3.org/ns/ldp#>.
+@prefix posix: <http://www.w3.org/ns/posix/stat#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+<> a ldp:BasicContainer, ldp:Container, ldp:Resource;
+    dc:modified "2024-03-13T22:54:36.000Z"^^xsd:dateTime;
+    ldp:contains <notification1>, <notification2>, <randomNotification>.

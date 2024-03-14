@@ -116,10 +116,9 @@ export const fetchRdfDocument = async (uri: URI, fetch: Fetch) => {
 
   if (res.ok) {
     const data = await res.text()
-    return {
-      data: parseRdfToQuads(data, { baseIRI: doc }),
-      response: res,
-    }
+    return { data: parseRdfToQuads(data, { baseIRI: doc }), response: res }
+  } else if (400 <= res.status && res.status < 500) {
+    return { data: [], response: res }
   } else throw new Error(`Fetching ${doc} not successful`)
 }
 

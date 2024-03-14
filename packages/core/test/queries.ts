@@ -1,7 +1,18 @@
 import { difference } from 'lodash'
 import * as n3 from 'n3'
 import { RdfQuery } from '../src'
-import { dct, foaf, hospex, sioc, solid, vcard } from './rdf-namespaces'
+import {
+  as,
+  dct,
+  foaf,
+  hospex,
+  ldp,
+  rdf,
+  rdfs,
+  sioc,
+  solid,
+  vcard,
+} from './rdf-namespaces'
 
 export const personAccommodationsQuery: RdfQuery = [
   {
@@ -113,3 +124,61 @@ personAccommodationQuery2[offerIndex] = {
   target: '?offer',
 }
 export { personAccommodationQuery2 }
+
+export const inboxMessagesQuery: RdfQuery = [
+  {
+    type: 'match',
+    subject: '?person',
+    predicate: rdfs.seeAlso, // TODO also include foaf.isPrimaryTopicOf
+    pick: 'object',
+    target: '?profileDocument',
+  },
+  // fetch the profile documents
+  { type: 'add resources', variable: '?profileDocument' },
+  {
+    type: 'match',
+    subject: '?person',
+    predicate: ldp.inbox,
+    pick: 'object',
+    target: '?inbox',
+  },
+  {
+    type: 'match',
+    subject: '?inbox',
+    predicate: ldp.contains,
+    pick: 'object',
+    target: '?notification',
+  },
+  {
+    type: 'match',
+    subject: '?notification',
+    predicate: rdf.type,
+    object: as.Add,
+    pick: 'subject',
+    target: '?addNotification',
+  },
+  {
+    type: 'match',
+    subject: '?addNotification',
+    predicate: as.context,
+    object: 'https://www.pod-chat.com/LongChatMessage',
+    pick: 'subject',
+    target: '?longChatNotification',
+  },
+  {
+    type: 'match',
+    subject: '?longChatNotification',
+    predicate: as.object,
+    pick: 'object',
+    target: '?message',
+  },
+  { type: 'add resources', variable: '?message' },
+  {
+    type: 'match',
+    subject: '?longChatNotification',
+    predicate: as.target,
+    pick: 'object',
+    target: '?chat',
+  },
+  { type: 'add resources', variable: '?chat' },
+]

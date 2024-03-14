@@ -170,7 +170,7 @@ export class QueryAndStore {
 
     const movesFromVariable = [
       ...(this.moves.provides[uri] ?? new Set()),
-    ].filter(move => move.from[variable].has(uri))
+    ].filter(move => move.from[variable]?.has(uri))
 
     for (const move of movesFromVariable) {
       const nextVariables = move.to
