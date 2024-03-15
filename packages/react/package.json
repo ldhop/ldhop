@@ -1,6 +1,6 @@
 {
   "name": "@ldhop/react",
-  "version": "0.0.0-alpha.3-react",
+  "version": "0.0.0-alpha.4-react",
   "description": "Follow your nose through linked data resources - for React",
   "keywords": [
     "query",
