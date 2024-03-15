@@ -10,6 +10,7 @@
   "license": "MIT",
   "private": false,
   "dependencies": {
-    "@ldhop/core": "^0.0.1-alpha.1"
+    "@ldhop/core": "^0.0.1-alpha.1",
+    "@ldhop/react": "^0.0.0-alpha.0"
   }
 }
