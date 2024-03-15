@@ -1,5 +1,6 @@
 import type { QueryAndStore } from './QueryAndStore'
 export { QueryAndStore } from './QueryAndStore'
+export { fetchRdfDocument } from './utils/helpers'
 
 export type TransformStore = (qas: QueryAndStore) => void
 
