@@ -182,3 +182,20 @@ export const inboxMessagesQuery: RdfQuery = [
   },
   { type: 'add resources', variable: '?chat' },
 ]
+
+export const communityQuery: RdfQuery = [
+  {
+    type: 'match',
+    subject: '?community',
+    predicate: sioc.has_usergroup,
+    pick: 'object',
+    target: '?group',
+  },
+  {
+    type: 'match',
+    subject: '?group',
+    predicate: vcard.hasMember,
+    pick: 'object',
+    target: '?person',
+  },
+]

@@ -388,7 +388,30 @@ export class QueryAndStore {
       ),
     ])
 
+    // if the variable is used in other queries and hasn't been given status, mark it as missing
+    const qVariable = `?${variable}`
+
+    const isInAddResources = this.query.some(
+      a =>
+        typeof a !== 'function' &&
+        a.type === 'add resources' &&
+        a.variable === qVariable,
+    )
+
+    const isInMatch = this.query.some(
+      a =>
+        typeof a !== 'function' &&
+        a.type === 'match' &&
+        (a.subject === qVariable ||
+          a.predicate === qVariable ||
+          a.object === qVariable ||
+          a.graph === qVariable),
+    )
+
+    const isNeeded = isInAddResources || isInMatch
+
     if (
+      isNeeded &&
       this.store.match(
         resourceNode,
         new NamedNode(meta.status),

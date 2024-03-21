@@ -1,5 +1,4 @@
-import { QueryAndStore, RdfQuery } from '@ldhop/core'
-import { fetchRdfDocument } from '@ldhop/core/dist/utils/helpers'
+import { QueryAndStore, RdfQuery, fetchRdfDocument } from '@ldhop/core'
 import { QueryKey, UseQueryResult, useQueries } from '@tanstack/react-query'
 import isEqual from 'lodash/isEqual'
 import mapValues from 'lodash/mapValues'
@@ -45,7 +44,7 @@ export const useLDhopQuery = <AdditionalData extends object = object>({
       staleTime,
     })),
     combine: results => ({
-      ...(getAdditionalData?.(results) ?? {}),
+      ...(getAdditionalData(results) ?? {}),
       data: results
         .map((result, i) => [result, resources[i]] as const)
         .filter(([result]) => result.status === 'success' && result.data)
@@ -109,6 +108,10 @@ export const useLDhopQuery = <AdditionalData extends object = object>({
     lastResults.current = results
   }, [results])
 
+  // const { data, pending, ...additionalData } = results
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { data, pending, ...rest } = results
+
   return useMemo(
     () => ({
       store: outputStore,
@@ -116,7 +119,8 @@ export const useLDhopQuery = <AdditionalData extends object = object>({
       variables: outputVariables,
       qas: qas.current,
       isLoading: results.pending,
+      ...rest,
     }),
-    [outputQuads, outputStore, outputVariables, results.pending],
+    [outputQuads, outputStore, outputVariables, rest, results.pending],
   )
 }

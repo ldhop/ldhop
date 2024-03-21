@@ -2,6 +2,7 @@ import { expect } from 'chai'
 import { QueryAndStore } from '../src/QueryAndStore'
 import {
   communityAccommodationsQuery,
+  communityQuery,
   personAccommodationQuery2,
   personAccommodationsQuery,
 } from './queries'
@@ -64,5 +65,67 @@ describe('Adding resources to QueryAndStore', () => {
     const offers = qas.getVariable('offer')
 
     expect(offers).to.have.length(2)
+  })
+
+  it('should not miss unused variables', () => {
+    const qas = new QueryAndStore(communityQuery, {
+      community: new Set(['https://community.example/community#us']),
+    })
+
+    const resources = qas.getMissingResources()
+    expect(resources)
+      .to.have.length(1)
+      .and.to.deep.equal(['https://community.example/community'])
+
+    const communityResource = resources[0]
+
+    const data = fetchRdf(communityResource)
+
+    qas.addResource(communityResource, data)
+
+    const resourcesAfter = qas.getMissingResources()
+    expect(resourcesAfter)
+      .to.have.length(1)
+      .and.to.deep.equal(['https://community.example/group'])
+
+    const groupData = fetchRdf(resourcesAfter[0])
+    qas.addResource(resourcesAfter[0], groupData)
+
+    const missingAfter = qas.getMissingResources()
+    expect(missingAfter).to.have.length(0)
+  })
+
+  it('should miss used variables', () => {
+    const qas = new QueryAndStore(
+      communityQuery.concat({
+        type: 'add resources',
+        variable: '?person',
+      }),
+      {
+        community: new Set(['https://community.example/community#us']),
+      },
+    )
+
+    const resources = qas.getMissingResources()
+    expect(resources)
+      .to.have.length(1)
+      .and.to.deep.equal(['https://community.example/community'])
+
+    const communityResource = resources[0]
+
+    const data = fetchRdf(communityResource)
+
+    qas.addResource(communityResource, data)
+
+    const resourcesAfter = qas.getMissingResources()
+    expect(resourcesAfter)
+      .to.have.length(1)
+      .and.to.deep.equal(['https://community.example/group'])
+
+    const groupData = fetchRdf(resourcesAfter[0])
+    qas.addResource(resourcesAfter[0], groupData)
+
+    const missingAfter = qas.getMissingResources()
+    expect(missingAfter).to.have.length(3)
   })
 })
