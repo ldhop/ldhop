@@ -2,9 +2,11 @@ root: true
 extends:
   - eslint:recommended
   - plugin:@typescript-eslint/recommended
+  - plugin:react-hooks/recommended
   - prettier
 plugins:
   - '@typescript-eslint'
+  - react-hooks
   - prettier
 rules:
   prettier/prettier: warn
@@ -13,6 +15,8 @@ rules:
     - args: after-used
       ignoreRestSiblings: false
   no-console: warn
+  react-hooks/rules-of-hooks: error
+  react-hooks/exhaustive-deps: warn
 
 parser: '@typescript-eslint/parser'
 parserOptions:

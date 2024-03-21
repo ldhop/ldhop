@@ -1,4 +1,5 @@
-import { differenceWith, intersection } from 'lodash'
+import differenceWith from 'lodash/differenceWith'
+import intersection from 'lodash/intersection'
 import { NamedNode, Quad, Store } from 'n3'
 import { Match, RdfQuery, TransformStore } from '.'
 import { removeHashFromURI } from './utils/helpers'
@@ -240,8 +241,8 @@ export class QueryAndStore {
       for (const variable in providedVariables) {
         providedVariables[variable].forEach(v => {
           // which moves provide this variable
-          const providingMoves = [...this.moves.providedBy[v]].filter(
-            a => a.to[variable]?.has(v),
+          const providingMoves = [...this.moves.providedBy[v]].filter(a =>
+            a.to[variable]?.has(v),
           )
           if (providingMoves.length <= 1) {
             this.removeVariable(variable, v)

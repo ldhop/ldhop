@@ -34,7 +34,9 @@
     "lint": "eslint src/** --fix --no-error-on-unmatched-pattern"
   },
   "dependencies": {
-    "@ldhop/core": "^0.0.1-alpha.2"
+    "@ldhop/core": "^0.0.1-alpha.2",
+    "@types/lodash": "^4.17.0",
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
     "@tanstack/react-query": "^5.28.4",

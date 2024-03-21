@@ -1,4 +1,4 @@
-import { difference } from 'lodash'
+import difference from 'lodash/difference'
 import * as n3 from 'n3'
 import { RdfQuery } from '../src'
 import {

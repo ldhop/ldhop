@@ -40,7 +40,7 @@
     "ts-node": "^10.9.1"
   },
   "dependencies": {
-    "@types/lodash": "^4.14.202",
+    "@types/lodash": "^4.17.0",
     "@types/n3": "^1.16.4",
     "lodash": "^4.17.21",
     "n3": "^1.17.2",
