@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { NamedNode, Quad } from 'n3'
 import { QueryAndStore } from '../src/QueryAndStore'
-import { personAccommodationsQuery } from './queries'
+import { friendOfAFriendQuery, personAccommodationsQuery } from './queries'
 import { hospex, rdf, sioc } from './rdf-namespaces'
 import { fetchRdf } from './resources'
 import { run } from './run'
@@ -166,5 +166,25 @@ describe('Replacing resources in QueryAndStore', () => {
         new NamedNode(hospex.Accommodation),
       ).size,
     ).to.equal(0)
+  })
+
+  it('should work fine with hopping in circles', () => {
+    const qas = new QueryAndStore(friendOfAFriendQuery, {
+      person: new Set(['https://person.example/profile/card#me']),
+    })
+
+    run(qas)
+
+    const personsBefore = qas.getVariable('person')
+    expect(personsBefore).to.have.length(4)
+
+    qas.addResource('https://person2.example/profile/card', [])
+
+    run(qas)
+
+    const personsAfter = qas.getVariable('person')
+    // there will be remaining person and person2
+    expect(personsAfter).to.have.length(2)
+    expect(qas.moves.list.size).to.equal(2)
   })
 })

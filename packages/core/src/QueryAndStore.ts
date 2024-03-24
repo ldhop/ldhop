@@ -83,6 +83,14 @@ export class QueryAndStore {
 
     Object.entries(startingPoints).forEach(([variable, uris]) => {
       uris.forEach(uri => {
+        // we add a move for each variable that is provided at the beginning
+        // sometimes circular reference would try to remove them
+        // we prevent that by making sure the initial variables don't get orphaned, with this move
+        this.moves.add({
+          from: {},
+          to: { [variable]: new Set([uri]) },
+          step: -1,
+        })
         this.addVariable(variable, uri)
       })
     })
@@ -175,6 +183,7 @@ export class QueryAndStore {
 
     for (const move of movesFromVariable) {
       const nextVariables = move.to
+      this.moves.remove(move)
       for (const variable in nextVariables) {
         nextVariables[variable].forEach(nextVar => {
           // see if it's the only provision of this variable
@@ -184,7 +193,6 @@ export class QueryAndStore {
           if (a.length <= 1) this.removeVariable(variable, nextVar)
         })
       }
-      this.moves.remove(move)
     }
   }
 

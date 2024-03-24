@@ -1,0 +1,16 @@
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix solid: <http://www.w3.org/ns/solid/terms#>.
+@prefix space: <http://www.w3.org/ns/pim/space#>.
+@prefix ldp: <http://www.w3.org/ns/ldp#>.
+
+<> a foaf:PersonalProfileDocument;
+    foaf:maker <#me>;
+    foaf:primaryTopic <#me>.
+<#me> a foaf:Person;
+    space:storage </>;
+    ldp:inbox </inbox/>;
+    space:preferencesFile </settings/prefs.ttl>;
+    solid:oidcIssuer <https://person4.example/>;
+    foaf:name "test";
+    foaf:knows <https://person.example/profile/card#me>;
+    solid:publicTypeIndex </settings/publicTypeIndex.ttl>.
