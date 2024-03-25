@@ -362,7 +362,28 @@ export class QueryAndStore {
   private addVariable(variable: string, uri: string) {
     const uriNode = new NamedNode(uri)
     const resourceNode = new NamedNode(removeHashFromURI(uri))
-    const sizeBefore = this.store.size
+
+    // if the variable is already added, there's nothing to do
+    if (
+      this.store.has(
+        new Quad(
+          uriNode,
+          new NamedNode(meta.variable),
+          new NamedNode(meta.variable + '/' + variable),
+          new NamedNode(meta.meta),
+        ),
+      ) &&
+      this.store.has(
+        new Quad(
+          uriNode,
+          new NamedNode(meta.resource),
+          resourceNode,
+          new NamedNode(meta.meta),
+        ),
+      )
+    )
+      return
+
     this.store.addQuads([
       // add the new variable
       new Quad(
@@ -379,11 +400,6 @@ export class QueryAndStore {
         new NamedNode(meta.meta),
       ),
     ])
-
-    const sizeAfter = this.store.size
-
-    // if variable has already been added, nothing to do
-    if (sizeBefore === sizeAfter) return
 
     // if the variable is used in other queries and hasn't been given status, mark it as missing
     const qVariable = `?${variable}`
