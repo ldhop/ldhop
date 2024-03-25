@@ -1,0 +1,15 @@
+@prefix : <#>.
+@prefix dct: <http://purl.org/dc/terms/>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix sioc: <http://rdfs.org/sioc/ns#>.
+@prefix wf: <http://www.w3.org/2005/01/wf/flow#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix c: </profile/card#>.
+@prefix ind: <../../../index.ttl#>.
+
+:msg-d7b94b38-2fbd-4014-816a-b0139aca5fb3
+    dct:created "2024-03-25T02:28:19.976Z"^^xsd:dateTime;
+    sioc:content "faaa";
+    foaf:maker c:me.
+ind:this wf:message :msg-d7b94b38-2fbd-4014-816a-b0139aca5fb3 .
+

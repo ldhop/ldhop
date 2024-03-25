@@ -1,0 +1,13 @@
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix sioc: <http://rdfs.org/sioc/ns#>.
+@prefix space: <http://www.w3.org/ns/pim/space#>.
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#>.
+@prefix c: </profile/card#>.
+@prefix hospex: <http://w3id.org/hospex/ns#>.
+
+</profile/card#me>
+    sioc:member_of <https://community.example/community#us>;
+    hospex:storage <./>;
+    vcard:note "about me"@en;
+    space:preferencesFile <./emailSettings>;
+    foaf:name "My name".

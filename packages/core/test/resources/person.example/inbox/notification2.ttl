@@ -4,6 +4,6 @@
     a as:Add;
     as:actor <https://person2.example/profile/card#me>;
     as:context <https://www.pod-chat.com/LongChatMessage>;
-    as:object <https://person2.example/hospex/test-community/messages/messages2/2023/06/21/chat.ttl#msg-2>;
-    as:target <https://person2.example/hospex/test-community/messages/messages2/index.ttl#this>;
+    as:object <https://person2.example/hospex/community-example/messages/messages2/2023/06/21/chat.ttl#msg-2>;
+    as:target <https://person2.example/hospex/community-example/messages/messages2/index.ttl#this>;
     as:updated "2023-06-21T08:00:00.000Z"^^xsd:dateTime.

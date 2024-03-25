@@ -1,0 +1,19 @@
+@prefix : <#>.
+@prefix dct: <http://purl.org/dc/terms/>.
+@prefix ldp: <http://www.w3.org/ns/ldp#>.
+@prefix stat: <http://www.w3.org/ns/posix/stat#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix n0: <>.
+@prefix tur: <http://www.w3.org/ns/iana/media-types/text/turtle#>.
+
+n0:
+    a ldp:BasicContainer, ldp:Container;
+    dct:modified "2024-03-21T16:11:43Z"^^xsd:dateTime;
+    ldp:contains <chat.ttl>;
+    stat:mtime 1711037503.431;
+    stat:size 4096 .
+<chat.ttl>
+    a tur:Resource, ldp:Resource;
+    dct:modified "2024-03-21T16:11:58Z"^^xsd:dateTime;
+    stat:mtime 1711037518.879;
+    stat:size 750 .

@@ -1,0 +1,19 @@
+<#msg-486b9c60-fced-42b8-a5f1-32bc3e0d57bc> <http://purl.org/dc/terms/created> "2024-03-22T12:50:29.601Z"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://rdfs.org/sioc/ns#content> "write back";
+    <http://xmlns.com/foaf/0.1/maker> <https://person.example/profile/card#me>.
+<https://person.example/hospex/community-example/messages/41de871d-7268-4d10-b1d4-4dcda05f3e5b/index.ttl#this> <http://www.w3.org/2005/01/wf/flow#message> <#msg-486b9c60-fced-42b8-a5f1-32bc3e0d57bc>, <#msg-be3ae55e-0207-4c29-9c40-6ce61bc98ace>, <#msg-fe1fa411-cc52-4d15-b4e2-5a41a0c8464d>, <#msg-2a08280f-1c73-4bc2-a8df-07fd91a3d342>, <#msg-e445d6de-cbba-48a1-a178-a3f26c5257ca>, <#msg-87a9dfe9-4b52-4c9c-a058-1712ce6b5fea>.
+<#msg-be3ae55e-0207-4c29-9c40-6ce61bc98ace> <http://purl.org/dc/terms/created> "2024-03-22T12:51:15.954Z"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://rdfs.org/sioc/ns#content> "hello";
+    <http://xmlns.com/foaf/0.1/maker> <https://person.example/profile/card#me>.
+<#msg-fe1fa411-cc52-4d15-b4e2-5a41a0c8464d> <http://purl.org/dc/terms/created> "2024-03-22T13:01:37.684Z"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://rdfs.org/sioc/ns#content> "papa";
+    <http://xmlns.com/foaf/0.1/maker> <https://person.example/profile/card#me>.
+<#msg-2a08280f-1c73-4bc2-a8df-07fd91a3d342> <http://purl.org/dc/terms/created> "2024-03-22T13:02:21.196Z"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://rdfs.org/sioc/ns#content> "yay";
+    <http://xmlns.com/foaf/0.1/maker> <https://person.example/profile/card#me>.
+<#msg-e445d6de-cbba-48a1-a178-a3f26c5257ca> <http://purl.org/dc/terms/created> "2024-03-22T13:06:20.398Z"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://rdfs.org/sioc/ns#content> "hello";
+    <http://xmlns.com/foaf/0.1/maker> <https://person.example/profile/card#me>.
+<#msg-87a9dfe9-4b52-4c9c-a058-1712ce6b5fea> <http://purl.org/dc/terms/created> "2024-03-22T14:16:44.391Z"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://rdfs.org/sioc/ns#content> "...0";
+    <http://xmlns.com/foaf/0.1/maker> <https://person.example/profile/card#me>.

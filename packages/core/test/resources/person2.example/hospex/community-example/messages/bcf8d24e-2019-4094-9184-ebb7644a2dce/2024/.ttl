@@ -1,0 +1,19 @@
+@prefix : <#>.
+@prefix dct: <http://purl.org/dc/terms/>.
+@prefix ldp: <http://www.w3.org/ns/ldp#>.
+@prefix stat: <http://www.w3.org/ns/posix/stat#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix n0: <>.
+@prefix n1: <03/>.
+
+n0:
+    a ldp:BasicContainer, ldp:Container;
+    dct:modified "2024-03-21T16:11:43Z"^^xsd:dateTime;
+    ldp:contains n1:;
+    stat:mtime 1711037503.427;
+    stat:size 4096 .
+n1:
+    a ldp:BasicContainer, ldp:Container, ldp:Resource;
+    dct:modified "2024-03-25T02:28:20Z"^^xsd:dateTime;
+    stat:mtime 1711333700.606;
+    stat:size 4096 .

@@ -1,0 +1,37 @@
+@prefix : <#>.
+@prefix dct: <http://purl.org/dc/terms/>.
+@prefix ldp: <http://www.w3.org/ns/ldp#>.
+@prefix stat: <http://www.w3.org/ns/posix/stat#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix n0: <>.
+@prefix n1: <21/>.
+@prefix n2: <22/>.
+@prefix n3: <23/>.
+@prefix n4: <25/>.
+
+n0:
+    a ldp:BasicContainer, ldp:Container;
+    dct:modified "2024-03-25T02:28:20Z"^^xsd:dateTime;
+    ldp:contains n1:, n2:, n3:, n4:;
+    stat:mtime 1711333700.606;
+    stat:size 4096 .
+n1:
+    a ldp:BasicContainer, ldp:Container, ldp:Resource;
+    dct:modified "2024-03-21T16:11:43Z"^^xsd:dateTime;
+    stat:mtime 1711037503.431;
+    stat:size 4096 .
+n2:
+    a ldp:BasicContainer, ldp:Container, ldp:Resource;
+    dct:modified "2024-03-22T12:10:34Z"^^xsd:dateTime;
+    stat:mtime 1711109434.93;
+    stat:size 4096 .
+n3:
+    a ldp:BasicContainer, ldp:Container, ldp:Resource;
+    dct:modified "2024-03-22T23:46:52Z"^^xsd:dateTime;
+    stat:mtime 1711151212.193;
+    stat:size 4096 .
+n4:
+    a ldp:BasicContainer, ldp:Container, ldp:Resource;
+    dct:modified "2024-03-25T02:28:20Z"^^xsd:dateTime;
+    stat:mtime 1711333700.61;
+    stat:size 4096 .

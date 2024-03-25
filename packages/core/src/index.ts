@@ -14,5 +14,17 @@ export type Match = {
   target: `?${string}`
 }
 
+export type TransformVariable = {
+  type: 'transform variable'
+  source: `?${string}`
+  target: `?${string}`
+  transform: (uri: string) => string
+}
+
 type AddResources = { type: 'add resources'; variable: `?${string}` }
-export type RdfQuery = (TransformStore | Match | AddResources)[]
+export type RdfQuery = (
+  | TransformStore
+  | Match
+  | AddResources
+  | TransformVariable
+)[]

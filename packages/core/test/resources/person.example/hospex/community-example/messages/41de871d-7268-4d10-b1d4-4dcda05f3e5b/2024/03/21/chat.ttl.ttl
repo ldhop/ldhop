@@ -1,0 +1,10 @@
+<#msg-8bf3bc6a-fd63-4564-85c3-312730160692> <http://purl.org/dc/terms/created> "2024-03-21T16:09:47.851Z"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://rdfs.org/sioc/ns#content> "conversation starter";
+    <http://xmlns.com/foaf/0.1/maker> <https://person.example/profile/card#me>.
+<https://person.example/hospex/community-example/messages/41de871d-7268-4d10-b1d4-4dcda05f3e5b/index.ttl#this> <http://www.w3.org/2005/01/wf/flow#message> <#msg-8bf3bc6a-fd63-4564-85c3-312730160692>, <#msg-93370abd-0c1a-47ad-b5c3-d82d16ce5b8e>, <#msg-521de102-a404-44d2-8da2-060dbe822492>.
+<#msg-93370abd-0c1a-47ad-b5c3-d82d16ce5b8e> <http://purl.org/dc/terms/created> "2024-03-21T16:10:01.050Z"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://rdfs.org/sioc/ns#content> "another message";
+    <http://xmlns.com/foaf/0.1/maker> <https://person.example/profile/card#me>.
+<#msg-521de102-a404-44d2-8da2-060dbe822492> <http://purl.org/dc/terms/created> "2024-03-21T16:12:14.150Z"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://rdfs.org/sioc/ns#content> "asdf";
+    <http://xmlns.com/foaf/0.1/maker> <https://person.example/profile/card#me>.

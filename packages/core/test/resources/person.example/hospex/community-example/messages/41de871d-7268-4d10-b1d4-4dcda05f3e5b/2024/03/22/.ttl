@@ -1,0 +1,13 @@
+@prefix dc: <http://purl.org/dc/terms/>.
+@prefix ldp: <http://www.w3.org/ns/ldp#>.
+@prefix posix: <http://www.w3.org/ns/posix/stat#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+<> a ldp:Container, ldp:BasicContainer, ldp:Resource;
+    dc:modified "2024-03-22T12:50:30.000Z"^^xsd:dateTime.
+<chat.ttl> a ldp:Resource, <http://www.w3.org/ns/iana/media-types/text/turtle#Resource>;
+    dc:modified "2024-03-22T14:16:44.000Z"^^xsd:dateTime.
+<> posix:mtime 1711111830;
+    ldp:contains <chat.ttl>.
+<chat.ttl> posix:mtime 1711117004;
+    posix:size 1993.

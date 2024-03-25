@@ -1,0 +1,18 @@
+@prefix dc: <http://purl.org/dc/elements/1.1/>.
+@prefix wf: <http://www.w3.org/2005/01/wf/flow#>.
+
+<#this> a <http://www.w3.org/ns/pim/meeting#LongChat> ;
+    dc:author </profile/card#me> ;
+    dc:created "2024-03-21T16:11:41.629Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+    dc:title "Hospex chat channel" ;
+    wf:participation <#7df8ce86-80f1-4786-a238-807e891c6752> ;
+    wf:participation <#10ca852b-a446-4b46-8985-8a32fa5330d6> .
+
+<#7df8ce86-80f1-4786-a238-807e891c6752>
+    <http://www.w3.org/2002/12/cal/ical#dtstart> "2024-03-21T16:11:41.629Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+    wf:participant <https://person2.example/profile/card#me> .
+<#10ca852b-a446-4b46-8985-8a32fa5330d6>
+    <http://www.w3.org/2002/12/cal/ical#dtstart> "2024-03-21T16:11:41.629Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+    wf:participant <https://person.example/profile/card#me> ;
+    <http://purl.org/dc/terms/references> <https://person.example/hospex/community-example/messages/41de871d-7268-4d10-b1d4-4dcda05f3e5b/index.ttl#this> .
+

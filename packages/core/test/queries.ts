@@ -1,17 +1,21 @@
 import difference from 'lodash/difference'
 import * as n3 from 'n3'
 import { RdfQuery } from '../src'
+import { getContainer } from '../src/utils/helpers'
 import {
   as,
   dct,
   foaf,
   hospex,
   ldp,
+  meeting,
   rdf,
   rdfs,
   sioc,
   solid,
+  space,
   vcard,
+  wf,
 } from './rdf-namespaces'
 
 export const personAccommodationsQuery: RdfQuery = [
@@ -197,5 +201,163 @@ export const communityQuery: RdfQuery = [
     predicate: vcard.hasMember,
     pick: 'object',
     target: '?person',
+  },
+]
+
+export const chatsWithPerson: RdfQuery = [
+  {
+    type: 'match',
+    subject: '?person',
+    predicate: rdfs.seeAlso, // TODO also include foaf.isPrimaryTopicOf
+    pick: 'object',
+    target: '?profileDocument',
+  },
+  // fetch the profile documents
+  { type: 'add resources', variable: '?profileDocument' },
+  {
+    type: 'match',
+    subject: '?person',
+    predicate: space.preferencesFile,
+    pick: 'object',
+    target: '?preferencesFile',
+  },
+  { type: 'add resources', variable: '?preferencesFile' },
+  // find and fetch private type index
+  {
+    type: 'match',
+    subject: '?person',
+    predicate: solid.privateTypeIndex,
+    pick: 'object',
+    target: '?privateTypeIndex',
+  },
+  {
+    type: 'match',
+    subject: '?privateTypeIndex',
+    predicate: dct.references,
+    pick: 'object',
+    target: '?typeRegistration',
+  },
+  {
+    type: 'match',
+    subject: '?typeRegistration',
+    predicate: solid.forClass,
+    object: meeting.LongChat,
+    pick: 'subject',
+    target: '?typeRegistrationForChat',
+  },
+  {
+    type: 'match',
+    subject: '?typeRegistrationForChat',
+    predicate: solid.instance,
+    pick: 'object',
+    target: `?chat`,
+  },
+  {
+    type: 'match',
+    subject: '?chat',
+    predicate: wf.participation,
+    pick: 'object',
+    target: '?participation',
+  },
+  {
+    type: 'match',
+    subject: '?participation',
+    predicate: wf.participant,
+    pick: 'object',
+    target: '?participant',
+  },
+  {
+    type: 'match',
+    subject: '?participation',
+    predicate: wf.participant,
+    object: '?otherPerson',
+    pick: 'subject',
+    target: '?otherPersonParticipation',
+  },
+  {
+    type: 'match',
+    subject: '?participation',
+    predicate: wf.participant,
+    object: '?otherPerson',
+    pick: 'subject',
+    target: '?otherPersonParticipation',
+  },
+  {
+    type: 'match',
+    subject: '?chat',
+    predicate: wf.participation,
+    object: '?otherPersonParticipation',
+    pick: 'subject',
+    target: '?chatWithOtherPerson',
+  },
+  {
+    type: 'match',
+    subject: '?chatWithOtherPerson',
+    predicate: wf.participation,
+    pick: 'object',
+    target: '?chatWithOtherPersonParticipation',
+  },
+  {
+    type: 'match',
+    subject: '?chatWithOtherPersonParticipation',
+    predicate: dct.references,
+    pick: 'object',
+    target: '?otherChat',
+  },
+  // generate chat container
+  {
+    type: 'transform variable',
+    source: '?chatWithOtherPerson',
+    target: '?chatContainer',
+    transform: getContainer,
+  },
+  {
+    type: 'transform variable',
+    source: '?otherChat',
+    target: '?chatContainer',
+    transform: getContainer,
+  },
+  {
+    type: 'match',
+    subject: '?chatContainer',
+    predicate: ldp.contains,
+    pick: 'object',
+    target: '?year',
+  },
+  {
+    type: 'match',
+    subject: '?year',
+    predicate: ldp.contains,
+    pick: 'object',
+    target: '?month',
+  },
+  {
+    type: 'match',
+    subject: '?month',
+    predicate: ldp.contains,
+    pick: 'object',
+    target: '?day',
+  },
+  {
+    type: 'match',
+    subject: '?day',
+    predicate: ldp.contains,
+    pick: 'object',
+    target: '?messageDoc',
+  },
+  { type: 'add resources', variable: '?messageDoc' },
+  {
+    type: 'match',
+    subject: '?chat',
+    predicate: wf.message,
+    pick: 'object',
+    target: '?message',
+  },
+  {
+    type: 'match',
+    subject: '?otherChat',
+    predicate: wf.message,
+    pick: 'object',
+    target: '?message',
   },
 ]

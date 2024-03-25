@@ -1,0 +1,51 @@
+@prefix : <#>.
+@prefix dct: <http://purl.org/dc/terms/>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix sioc: <http://rdfs.org/sioc/ns#>.
+@prefix wf: <http://www.w3.org/2005/01/wf/flow#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix c: </profile/card#>.
+@prefix ind: <../../../index.ttl#>.
+
+:msg-0b1d980d-9470-4d93-9242-cd754b2f9cd0
+    dct:created "2024-03-22T13:00:34.606Z"^^xsd:dateTime;
+    sioc:content "write back";
+    foaf:maker c:me.
+:msg-51f6486f-542b-46ed-bdf9-dc59c618550b
+    dct:created "2024-03-22T14:36:01.029Z"^^xsd:dateTime;
+    sioc:content "blabla";
+    foaf:maker c:me.
+:msg-5f7fba9b-56dc-4d02-8b95-83d5f803f2fe
+    dct:created "2024-03-22T13:02:42.437Z"^^xsd:dateTime;
+    sioc:content "...";
+    foaf:maker c:me.
+:msg-66e90ea1-08db-47ee-abbc-7a7f0a175d37
+    dct:created "2024-03-22T12:16:41.044Z"^^xsd:dateTime;
+    sioc:content "aaaa";
+    foaf:maker c:me.
+:msg-677642aa-d076-43a2-b49b-be8d854acb1f
+    dct:created "2024-03-22T13:06:38.902Z"^^xsd:dateTime;
+    sioc:content "whatever";
+    foaf:maker c:me.
+:msg-6a6f16fb-be63-48f7-955d-f26de5c487ba
+    dct:created "2024-03-22T12:12:16.006Z"^^xsd:dateTime;
+    sioc:content "hello";
+    foaf:maker c:me.
+:msg-84fcd9e0-ec18-4948-ac1c-01d20b9f1319
+    dct:created "2024-03-22T12:10:34.257Z"^^xsd:dateTime;
+    sioc:content "dadyda";
+    foaf:maker c:me.
+:msg-b5cf2786-a821-437c-b0d0-779faaa3b0ff
+    dct:created "2024-03-22T13:01:05.172Z"^^xsd:dateTime;
+    sioc:content "laj laj";
+    foaf:maker c:me.
+ind:this
+    wf:message
+        :msg-0b1d980d-9470-4d93-9242-cd754b2f9cd0,
+        :msg-51f6486f-542b-46ed-bdf9-dc59c618550b,
+        :msg-5f7fba9b-56dc-4d02-8b95-83d5f803f2fe,
+        :msg-66e90ea1-08db-47ee-abbc-7a7f0a175d37,
+        :msg-677642aa-d076-43a2-b49b-be8d854acb1f,
+        :msg-6a6f16fb-be63-48f7-955d-f26de5c487ba,
+        :msg-84fcd9e0-ec18-4948-ac1c-01d20b9f1319,
+        :msg-b5cf2786-a821-437c-b0d0-779faaa3b0ff.

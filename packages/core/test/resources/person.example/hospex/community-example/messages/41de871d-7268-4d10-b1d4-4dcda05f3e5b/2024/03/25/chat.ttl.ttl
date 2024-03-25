@@ -1,0 +1,4 @@
+<#msg-a75210e5-f1fe-4d88-8108-6e76489f887c> <http://purl.org/dc/terms/created> "2024-03-25T02:28:04.223Z"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://rdfs.org/sioc/ns#content> "asdf";
+    <http://xmlns.com/foaf/0.1/maker> <https://person.example/profile/card#me>.
+<https://person.example/hospex/community-example/messages/41de871d-7268-4d10-b1d4-4dcda05f3e5b/index.ttl#this> <http://www.w3.org/2005/01/wf/flow#message> <#msg-a75210e5-f1fe-4d88-8108-6e76489f887c>.

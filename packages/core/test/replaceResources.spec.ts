@@ -1,7 +1,11 @@
 import { expect } from 'chai'
 import { NamedNode, Quad } from 'n3'
 import { QueryAndStore } from '../src/QueryAndStore'
-import { friendOfAFriendQuery, personAccommodationsQuery } from './queries'
+import {
+  chatsWithPerson,
+  friendOfAFriendQuery,
+  personAccommodationsQuery,
+} from './queries'
 import { hospex, rdf, sioc } from './rdf-namespaces'
 import { fetchRdf } from './resources'
 import { run } from './run'
@@ -186,5 +190,33 @@ describe('Replacing resources in QueryAndStore', () => {
     // there will be remaining person and person2
     expect(personsAfter).to.have.length(2)
     expect(qas.moves.list.size).to.equal(2)
+  })
+
+  it('should allow replacing all resources with empty resources', () => {
+    const qas = new QueryAndStore(chatsWithPerson, {
+      person: new Set(['https://person.example/profile/card#me']),
+      otherPerson: new Set(['https://person2.example/profile/card#me']),
+    })
+    expect(qas.getVariable('person')).to.have.length(1)
+
+    run(qas)
+
+    const messages = qas.getVariable('message')
+
+    expect(messages).to.have.length(23)
+
+    const resources = qas.store
+      .getGraphs(null, null, null)
+      .map(g => g.value)
+      .filter(r => !r.includes('ldhop.example'))
+
+    resources.forEach(resource => qas.addResource(resource, []))
+
+    // only initial variable moves stay
+    expect(qas.moves.list.size).to.equal(2)
+    expect(qas.getAllVariables()).to.deep.equal({
+      person: new Set(['https://person.example/profile/card#me']),
+      otherPerson: new Set(['https://person2.example/profile/card#me']),
+    })
   })
 })

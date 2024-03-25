@@ -1,7 +1,7 @@
 import differenceWith from 'lodash/differenceWith'
 import intersection from 'lodash/intersection'
 import { NamedNode, Quad, Store } from 'n3'
-import { Match, RdfQuery, TransformStore } from '.'
+import { Match, RdfQuery, TransformVariable } from '.'
 import { removeHashFromURI } from './utils/helpers'
 
 type Variables = { [key: string]: Set<string> }
@@ -106,46 +106,6 @@ export class QueryAndStore {
     return matches.map(m => m.value)
   }
 
-  // find steps that belong to this quad
-  findSteps(quad: Quad): RdfQuery {
-    return this.query.filter(step => {
-      if (typeof step === 'function') return false
-      if (step.type !== 'match') return false
-      return this.isStep(step, quad)
-    })
-  }
-
-  // is this step made in this quad?
-  isStep(step: Match, quad: Quad) {
-    for (const quadElement of [
-      'subject',
-      'predicate',
-      'object',
-      'graph',
-    ] as const) {
-      const stepElement = step[quadElement]
-      if (stepElement) {
-        if (stepElement.startsWith('?')) {
-          const variableName = stepElement.slice(1)
-          const has = this.store.has(
-            new Quad(
-              quad.subject,
-              new NamedNode(meta.variable),
-              new NamedNode(meta.variable + '/' + variableName),
-              new NamedNode(meta.meta),
-            ),
-          )
-
-          if (!has) return false
-        } else {
-          if (stepElement !== quad[quadElement].value) return false
-        }
-      }
-    }
-
-    return true
-  }
-
   private removeVariable(variable: string, uri: string) {
     const uriNode = new NamedNode(uri)
     const resourceNode = new NamedNode(removeHashFromURI(uri))
@@ -186,11 +146,11 @@ export class QueryAndStore {
       this.moves.remove(move)
       for (const variable in nextVariables) {
         nextVariables[variable].forEach(nextVar => {
-          // see if it's the only provision of this variable
+          // see if there's any provision of this variable left
           const a = [...(this.moves.providedBy[nextVar] ?? new Set())].filter(
-            a => a.to[variable].has(nextVar),
+            a => a.to[variable]?.has(nextVar),
           )
-          if (a.length <= 1) this.removeVariable(variable, nextVar)
+          if (a.length === 0) this.removeVariable(variable, nextVar)
         })
       }
     }
@@ -207,12 +167,9 @@ export class QueryAndStore {
 
     this.store.addQuads(additions)
 
-    const steps = this.query.filter(
-      a => typeof a === 'function' || a.type === 'match',
-    ) as (Match | TransformStore)[]
-    for (const step of steps) {
-      if (typeof step !== 'function') this.run(step, resource)
-      else step(this)
+    for (const step of this.query) {
+      if (typeof step === 'function') step(this)
+      else if (step.type === 'match') this.run(step, resource)
     }
 
     // mark the resource as added
@@ -246,19 +203,17 @@ export class QueryAndStore {
     moves.forEach(move => {
       const providedVariables = move.to
 
+      this.moves.remove(move)
+
       for (const variable in providedVariables) {
         providedVariables[variable].forEach(v => {
           // which moves provide this variable
           const providingMoves = [...this.moves.providedBy[v]].filter(a =>
             a.to[variable]?.has(v),
           )
-          if (providingMoves.length <= 1) {
-            this.removeVariable(variable, v)
-          }
+          if (providingMoves.length === 0) this.removeVariable(variable, v)
         })
       }
-
-      this.moves.remove(move)
     })
   }
 
@@ -272,6 +227,34 @@ export class QueryAndStore {
 
   //   return [] as Match[]
   // }
+
+  // edit variable with transform function
+  // currently it works for URIs, maybe we want to generalize
+  transformVariable(step: TransformVariable) {
+    const { source: sourceRaw, target: targetRaw, transform } = step
+    const source = sourceRaw.slice(1)
+    const target = targetRaw.slice(1)
+    const stepIndex = this.query.findIndex(s => s === step)
+    const sourceUris = this.getVariable(source)
+    for (const uri of sourceUris) {
+      const transformedUri = transform(uri)
+      const existingMoves = [...this.moves.list].filter(
+        m =>
+          m.from[source]?.has(uri) &&
+          m.to[target]?.has(transformedUri) &&
+          m.step === stepIndex,
+      )
+
+      if (existingMoves.length > 0) continue
+
+      this.addVariable(target, transformedUri)
+      this.moves.add({
+        from: { [source]: new Set([uri]) },
+        to: { [target]: new Set([transformedUri]) },
+        step: stepIndex,
+      })
+    }
+  }
 
   run(step: Match, resource: string) {
     const stepIndex = this.query.findIndex(s => s === step)
@@ -379,6 +362,7 @@ export class QueryAndStore {
   private addVariable(variable: string, uri: string) {
     const uriNode = new NamedNode(uri)
     const resourceNode = new NamedNode(removeHashFromURI(uri))
+    const sizeBefore = this.store.size
     this.store.addQuads([
       // add the new variable
       new Quad(
@@ -395,6 +379,11 @@ export class QueryAndStore {
         new NamedNode(meta.meta),
       ),
     ])
+
+    const sizeAfter = this.store.size
+
+    // if variable has already been added, nothing to do
+    if (sizeBefore === sizeAfter) return
 
     // if the variable is used in other queries and hasn't been given status, mark it as missing
     const qVariable = `?${variable}`
@@ -433,6 +422,21 @@ export class QueryAndStore {
         new NamedNode(meta.missing),
         new NamedNode(meta.meta),
       )
+    }
+
+    // if there is transform step for this variable, transform it
+
+    // find transform variable steps for this variable
+    const steps = this.query.filter(
+      (step): step is TransformVariable =>
+        typeof step !== 'function' &&
+        step.type === 'transform variable' &&
+        step.source === qVariable,
+    )
+
+    // and run each step
+    for (const step of steps) {
+      this.transformVariable(step)
     }
   }
 
