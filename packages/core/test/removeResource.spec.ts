@@ -1,7 +1,7 @@
 import { expect } from 'chai'
-import { QueryAndStore } from '../src/QueryAndStore'
-import { inboxMessagesQuery } from './queries'
-import { run } from './run'
+import { QueryAndStore } from '../src/QueryAndStore.js'
+import { inboxMessagesQuery } from './queries.js'
+import { run } from './run.js'
 
 describe('Removing resource', () => {
   it('[remove link] should correctly update the results', () => {

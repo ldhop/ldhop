@@ -1,11 +1,19 @@
 import { readFileSync } from 'fs'
 import { join } from 'path'
-import { parseRdfToQuads } from '../../src/utils/helpers'
+import { parseRdfToQuads } from '../../src/utils/helpers.js'
 
-export const fetch = (uri: string) => {
+// get current working directory
+const __dirname = process.cwd()
+
+const fetch = (uri: string) => {
   const url = new URL(uri)
 
-  const filename = join(__dirname, url.host, url.pathname + '.ttl')
+  const filename = join(
+    __dirname,
+    'test/resources',
+    url.host,
+    url.pathname + '.ttl',
+  )
   const data = readFileSync(filename, 'utf8')
   return data
 }

@@ -1,22 +1,19 @@
-import difference from 'lodash/difference'
+import difference from 'lodash/difference.js'
 import * as n3 from 'n3'
-import { RdfQuery } from '../src'
-import { getContainer } from '../src/utils/helpers'
 import {
-  as,
   dct,
   foaf,
-  hospex,
   ldp,
-  meeting,
   rdf,
   rdfs,
   sioc,
   solid,
   space,
   vcard,
-  wf,
-} from './rdf-namespaces'
+} from 'rdf-namespaces'
+import type { RdfQuery } from '../src/index.js'
+import { getContainer } from '../src/utils/helpers.js'
+import { as, hospex, meeting, wf } from './rdf-namespaces.js'
 
 export const personAccommodationsQuery: RdfQuery = [
   {
@@ -265,14 +262,6 @@ export const chatsWithPerson: RdfQuery = [
     predicate: wf.participant,
     pick: 'object',
     target: '?participant',
-  },
-  {
-    type: 'match',
-    subject: '?participation',
-    predicate: wf.participant,
-    object: '?otherPerson',
-    pick: 'subject',
-    target: '?otherPersonParticipation',
   },
   {
     type: 'match',

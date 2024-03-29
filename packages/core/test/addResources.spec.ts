@@ -1,13 +1,13 @@
 import { expect } from 'chai'
-import { QueryAndStore } from '../src/QueryAndStore'
+import { QueryAndStore } from '../src/QueryAndStore.js'
 import {
   communityAccommodationsQuery,
   communityQuery,
   personAccommodationQuery2,
   personAccommodationsQuery,
-} from './queries'
-import { fetchRdf } from './resources'
-import { run } from './run'
+} from './queries.js'
+import { fetchRdf } from './resources/index.js'
+import { run } from './run.js'
 
 describe('Adding resources to QueryAndStore', () => {
   it('should accept array of commands, and initial variables', () => {
@@ -127,5 +127,21 @@ describe('Adding resources to QueryAndStore', () => {
 
     const missingAfter = qas.getMissingResources()
     expect(missingAfter).to.have.length(3)
+  })
+
+  it('should not save duplicate moves', () => {
+    const qas = new QueryAndStore(personAccommodationQuery2, {
+      community: new Set(['https://community.example/community#us']),
+      person: new Set(['https://person.example/profile/card#me']),
+    })
+
+    run(qas)
+
+    expect(qas.moves.list).to.have.length(10)
+
+    const next = fetchRdf('https://person.example/settings/publicTypeIndex.ttl')
+
+    qas.addResource('https://person.example/settings/publicTypeIndex.ttl', next)
+    expect(qas.moves.list).to.have.length(10)
   })
 })

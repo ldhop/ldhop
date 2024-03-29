@@ -7,6 +7,7 @@
     "type": "git",
     "url": "https://github.com/ldhop/ldhop.git"
   },
+  "type": "module",
   "keywords": [
     "query",
     "linkeddata",
@@ -26,8 +27,8 @@
   },
   "scripts": {
     "test": "mocha",
-    "build": "rm -rf dist && tsc",
-    "prepublishOnly": "yarn test && yarn build",
+    "build": "tsc",
+    "prepublishOnly": "rm -rf dist && yarn build",
     "lint": "eslint src/** --fix --no-error-on-unmatched-pattern"
   },
   "devDependencies": {
@@ -37,7 +38,8 @@
     "chai": "^4.3.10",
     "mocha": "^10.2.0",
     "rdf-namespaces": "^1.12.0",
-    "ts-node": "^10.9.1"
+    "ts-node": "^10.9.1",
+    "tsx": "^4.7.1"
   },
   "dependencies": {
     "@types/lodash": "^4.17.0",

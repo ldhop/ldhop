@@ -1,8 +1,7 @@
 // not sure how to resolve errors resulting from this eslint rule
 // it's because we overwrite exports from rdf-namespaces here
 import * as ns from 'rdf-namespaces'
-import { https } from '../src/utils/helpers'
-export * from 'rdf-namespaces'
+import { https } from '../src/utils/helpers.js'
 
 const base = {
   geo: 'http://www.w3.org/2003/01/geo/wgs84_pos#',
@@ -11,13 +10,6 @@ const base = {
   ui: 'http://www.w3.org/ns/ui#',
   wf: 'http://www.w3.org/2005/01/wf/flow#',
   xsd: 'http://www.w3.org/2001/XMLSchema#',
-}
-
-export const geo = {
-  Point: base.geo + 'Point',
-  location: base.geo + 'location',
-  lat: base.geo + 'lat',
-  long: base.geo + 'long',
 }
 
 export const hospex = {
@@ -45,13 +37,4 @@ export const wf = {
 export const meeting = {
   LongChat: base.meeting + 'LongChat',
   ...ns.meeting,
-}
-
-export const xsd = {
-  dateTime: base.xsd + 'dateTime',
-  decimal: base.xsd + 'decimal',
-}
-
-export const ui = {
-  sharedPreferences: base.ui + 'sharedPreferences',
 }

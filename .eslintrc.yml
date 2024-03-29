@@ -2,8 +2,19 @@ root: true
 extends:
   - eslint:recommended
   - plugin:@typescript-eslint/recommended
+  - plugin:import/recommended
+  - plugin:import/typescript
   - plugin:react-hooks/recommended
   - prettier
+settings:
+  import/parsers:
+    '@typescript-eslint/parser':
+      - .ts
+      - .tsx
+  import/resolver:
+    typescript:
+      alwaysTryTypes: true
+    node: true
 plugins:
   - '@typescript-eslint'
   - react-hooks
@@ -17,6 +28,13 @@ rules:
   no-console: warn
   react-hooks/rules-of-hooks: error
   react-hooks/exhaustive-deps: warn
+  'import/no-default-export': error
+  import/no-unused-modules:
+    - warn
+    - unusedExports: true
+      ignoreExports:
+        - packages/example-react/vite.config.ts
+        - packages/core/src/index.ts
 
 parser: '@typescript-eslint/parser'
 parserOptions:

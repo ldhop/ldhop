@@ -1,3 +1,6 @@
 extension: [ts]
 spec: test/*.spec.ts
-require: ts-node/register
+require: tsx
+node-option:
+  - experimental-specifier-resolution=node
+  - import=tsx/esm

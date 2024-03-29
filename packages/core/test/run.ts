@@ -1,6 +1,6 @@
 import { Quad } from 'n3'
-import type { QueryAndStore } from '../src/QueryAndStore'
-import { fetchRdf } from './resources'
+import type { QueryAndStore } from '../src/QueryAndStore.js'
+import { fetchRdf } from './resources/index.js'
 
 export const run = (qas: QueryAndStore) => {
   let missingResources = qas.getMissingResources()

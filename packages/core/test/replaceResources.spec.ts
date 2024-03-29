@@ -1,14 +1,15 @@
 import { expect } from 'chai'
 import { NamedNode, Quad } from 'n3'
-import { QueryAndStore } from '../src/QueryAndStore'
+import { rdf, sioc } from 'rdf-namespaces'
+import { QueryAndStore } from '../src/QueryAndStore.js'
 import {
   chatsWithPerson,
   friendOfAFriendQuery,
   personAccommodationsQuery,
-} from './queries'
-import { hospex, rdf, sioc } from './rdf-namespaces'
-import { fetchRdf } from './resources'
-import { run } from './run'
+} from './queries.js'
+import { hospex } from './rdf-namespaces.js'
+import { fetchRdf } from './resources/index.js'
+import { run } from './run.js'
 
 describe('Replacing resources in QueryAndStore', () => {
   it('[remove link] should correctly update the results', () => {
@@ -190,6 +191,12 @@ describe('Replacing resources in QueryAndStore', () => {
     // there will be remaining person and person2
     expect(personsAfter).to.have.length(2)
     expect(qas.moves.list.size).to.equal(2)
+
+    // now, let's try to revert it
+    const person2 = fetchRdf('https://person2.example/profile/card')
+    qas.addResource('https://person2.example/profile/card', person2)
+    run(qas)
+    expect(qas.getVariable('person')).to.have.length(4)
   })
 
   it('should allow replacing all resources with empty resources', () => {

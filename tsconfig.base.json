@@ -3,6 +3,8 @@
     "target": "es6",
     "lib": ["esnext"],
     "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "verbatimModuleSyntax": true,
     "declaration": true,
     "sourceMap": true,
     "esModuleInterop": true,

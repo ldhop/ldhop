@@ -1,6 +1,6 @@
-import type { QueryAndStore } from './QueryAndStore'
-export { QueryAndStore } from './QueryAndStore'
-export { fetchRdfDocument } from './utils/helpers'
+import type { QueryAndStore } from './QueryAndStore.js'
+export { QueryAndStore } from './QueryAndStore.js'
+export { fetchRdfDocument } from './utils/helpers.js'
 
 export type TransformStore = (qas: QueryAndStore) => void
 

@@ -1,14 +1,17 @@
-import differenceWith from 'lodash/differenceWith'
-import intersection from 'lodash/intersection'
+import differenceWith from 'lodash/differenceWith.js'
 import { NamedNode, Quad, Store } from 'n3'
-import { Match, RdfQuery, TransformVariable } from '.'
-import { removeHashFromURI } from './utils/helpers'
+import type { ValuesType } from 'utility-types'
+import type { Match, RdfQuery, TransformVariable } from './index.js'
+import { removeHashFromURI } from './utils/helpers.js'
 
 type Variables = { [key: string]: Set<string> }
 
 type Move = { from: Variables; to: Variables; step: number; quad?: Quad }
 
 const stringifyQuad = (quad: Quad) => JSON.stringify(quad.toJSON())
+
+const quadElements = ['subject', 'predicate', 'object', 'graph'] as const
+type QuadElement = ValuesType<typeof quadElements>
 
 const meta = {
   meta: 'https://ldhop.example/meta',
@@ -164,13 +167,7 @@ export class QueryAndStore {
     const [additions, deletions] = quadDiff(quads, oldResource as Quad[])
 
     deletions.forEach(quad => this.removeQuad(quad))
-
-    this.store.addQuads(additions)
-
-    for (const step of this.query) {
-      if (typeof step === 'function') step(this)
-      else if (step.type === 'match') this.run(step, resource)
-    }
+    additions.forEach(quad => this.addQuad(quad))
 
     // mark the resource as added
     this.store.removeQuad(
@@ -185,6 +182,62 @@ export class QueryAndStore {
       new NamedNode(meta.added),
       new NamedNode(meta.meta),
     )
+  }
+
+  addQuad(quad: Quad) {
+    // find relevant matches in steps
+
+    this.store.addQuad(quad)
+
+    const variableUris = Object.fromEntries(
+      quadElements.map(el => [
+        el,
+        this.store
+          .getObjects(quad[el], meta.variable, meta.meta)
+          .map(q => q.value),
+      ]),
+    ) as Record<QuadElement, string[]>
+
+    const matchQuadElement = (step: Match, element: QuadElement): boolean => {
+      const el = step[element]
+      const node = quad[element]
+      if (!el) return true
+      if (el.startsWith('?')) {
+        const variableUri = meta.variable + '/' + el.slice(1)
+        if (variableUris[element].includes(variableUri)) return true
+      }
+      if (el === node.value) return true
+      return false
+    }
+
+    // find relevant steps
+    const relevantSteps = Object.entries(this.query)
+      .filter(
+        (entry): entry is [string, Match] =>
+          typeof entry[1] !== 'function' && entry[1].type === 'match',
+      )
+      .filter(([, step]) =>
+        // keep only steps that match given quad.
+        quadElements.every(element => matchQuadElement(step, element)),
+      )
+      .map(([i, s]) => [+i, s] as const)
+
+    // hop the steps and assign new variables
+    for (const [i, step] of relevantSteps) {
+      // save the move
+      const from: Variables = {}
+      for (const element of quadElements) {
+        const el = step[element]
+        if (el?.startsWith('?'))
+          from[el.slice(1)] = new Set([quad[element].value])
+      }
+      const to = { [step.target.slice(1)]: new Set([quad[step.pick].value]) }
+      this.moves.add({ step: i, from, to, quad })
+
+      this.addVariable(step.target.slice(1), quad[step.pick].value)
+    }
+
+    // when assigning new variables, make hops from the new variables, too
   }
 
   removeResource(uri: string) {
@@ -217,17 +270,6 @@ export class QueryAndStore {
     })
   }
 
-  // getRelevantSteps(q: Quad) {
-  //   // first get variables for subject, predicate, and object
-  //   Object.entries(this.variables).map(([variable, set]) => {
-  //     if (set.has(q.subject.termType)) 1
-  //     // TODO
-  //   })
-  //   // then
-
-  //   return [] as Match[]
-  // }
-
   // edit variable with transform function
   // currently it works for URIs, maybe we want to generalize
   transformVariable(step: TransformVariable) {
@@ -256,107 +298,84 @@ export class QueryAndStore {
     }
   }
 
-  run(step: Match, resource: string) {
-    const stepIndex = this.query.findIndex(s => s === step)
+  private hopFromVariable(variable: string, uri: string) {
+    // find steps relevant for this variable
+    const qVariable = `?${variable}`
+    const relevantSteps = this.query
+      .map((s, i) => [s, i] as const)
+      .filter(([step]) => {
+        if (typeof step === 'function') return true
+        if (
+          step.type === 'match' &&
+          quadElements.some(el => step[el] === qVariable)
+        )
+          return true
+        if (step.type === 'transform variable' && step.source === qVariable)
+          return true
+        return false
+      })
 
-    const config = {
-      subject: [null] as (string | null)[],
-      predicate: [null] as (string | null)[],
-      object: [null] as (string | null)[],
-      graph: [null] as (string | null)[],
-    }
+    relevantSteps.forEach(([step, i]) => {
+      if (typeof step === 'function') {
+        step(this)
+      } else if (step.type === 'transform variable') {
+        const transformedUri = step.transform(uri)
+        this.moves.add({
+          from: { [step.source.slice(1)]: new Set([uri]) },
+          to: { [step.target.slice(1)]: new Set([transformedUri]) },
+          step: i,
+        })
+        this.addVariable(step.target.slice(1), transformedUri)
+      } else if (step.type === 'match') {
+        // try to match quad(s) relevant for this step
 
-    for (const quadElement of [
-      'subject',
-      'predicate',
-      'object',
-      'graph',
-    ] as const) {
-      const definition = step[quadElement]
-      if (definition) {
-        config[quadElement] = definition.startsWith('?')
-          ? // exchange variable to URIs on given position within current resource
-            intersection(
-              // URIs in variable
-              this.store
-                .getSubjects(
-                  new NamedNode(meta.variable),
-                  new NamedNode(meta.variable + '/' + definition.slice(1)),
-                  null,
-                )
-                .map(s => s.value),
-              // URIs at given position within resource
-              quadElement === 'graph'
-                ? [resource]
-                : this.store[
-                    quadElement === 'subject'
-                      ? 'getSubjects'
-                      : quadElement === 'predicate'
-                        ? 'getPredicates'
-                        : 'getObjects'
-                  ](null, null, new NamedNode(resource)).map(x => x.value),
-            )
-          : [definition]
-      }
-    }
-
-    const output = new Set<string>()
-
-    for (const s of config.subject) {
-      for (const p of config.predicate) {
-        for (const o of config.object) {
-          for (const g of config.graph) {
-            this.store
-              .getQuads(
-                s === null ? s : new NamedNode(s),
-                p === null ? p : new NamedNode(p),
-                o === null ? o : new NamedNode(o),
-                g === null ? new NamedNode(resource) : new NamedNode(g),
+        const generateRules = (step: Match, element: QuadElement) => {
+          let outputs = new Set<string | null>()
+          const s = step[element]
+          if (!s) outputs.add(null)
+          else if (!s.startsWith('?')) outputs.add(s)
+          else if (s.slice(1) === variable) outputs.add(uri)
+          else {
+            const variables = this.store
+              .getSubjects(
+                meta.variable,
+                meta.variable + '/' + s.slice(1),
+                meta.meta,
               )
-              .forEach(q => {
-                const target = q[step.pick].value
-                output.add(target)
-                const move: Move = {
-                  from: {},
-                  to: {},
-                  step: stepIndex,
-                  quad: q,
-                }
+              .map(v => v.value)
+            outputs = new Set(variables)
+          }
 
-                if (step.subject?.startsWith('?')) {
-                  const variable = step.subject.slice(1)
-                  move.from[variable] ??= new Set()
-                  move.from[variable].add(s as string)
-                }
-                if (step.predicate?.startsWith('?')) {
-                  const variable = step.predicate.slice(1)
-                  move.from[variable] ??= new Set()
-                  move.from[variable].add(p as string)
-                }
-                if (step.object?.startsWith('?')) {
-                  const variable = step.object.slice(1)
-                  move.from[variable] ??= new Set()
-                  move.from[variable].add(o as string)
-                }
-                if (step.graph?.startsWith('?')) {
-                  const variable = step.graph.slice(1)
-                  move.from[variable] ??= new Set()
-                  move.from[variable].add(g as string)
-                }
+          return outputs
+        }
 
-                move.to[step.target.slice(1)] ??= new Set()
-                move.to[step.target.slice(1)].add(target)
+        const constraints = Object.fromEntries(
+          quadElements.map(el => [el, generateRules(step, el)] as const),
+        ) as Record<QuadElement, Set<string | null>>
 
-                this.moves.add(move)
-              })
+        for (const s of constraints.subject) {
+          for (const p of constraints.predicate) {
+            for (const o of constraints.object) {
+              for (const g of constraints.graph) {
+                const quads = this.store.getQuads(s, p, o, g)
+
+                for (const quad of quads) {
+                  const targetVar = step.target.slice(1)
+                  const targetUri = quad[step.pick].value
+                  const from: Variables = {}
+                  for (const el of quadElements)
+                    if (step[el]?.startsWith('?'))
+                      from[step[el]!.slice(1)] = new Set([s!])
+                  const to = { [targetVar]: new Set([targetUri]) }
+                  this.moves.add({ from, to, step: i, quad })
+                  this.addVariable(targetVar, targetUri)
+                }
+              }
+            }
           }
         }
       }
-    }
-
-    for (const next of output) {
-      this.addVariable(step.target.slice(1), next)
-    }
+    })
   }
 
   private addVariable(variable: string, uri: string) {
@@ -415,10 +434,7 @@ export class QueryAndStore {
       a =>
         typeof a !== 'function' &&
         a.type === 'match' &&
-        (a.subject === qVariable ||
-          a.predicate === qVariable ||
-          a.object === qVariable ||
-          a.graph === qVariable),
+        quadElements.some(el => a[el] === qVariable),
     )
 
     const isNeeded = isInAddResources || isInMatch
@@ -440,20 +456,7 @@ export class QueryAndStore {
       )
     }
 
-    // if there is transform step for this variable, transform it
-
-    // find transform variable steps for this variable
-    const steps = this.query.filter(
-      (step): step is TransformVariable =>
-        typeof step !== 'function' &&
-        step.type === 'transform variable' &&
-        step.source === qVariable,
-    )
-
-    // and run each step
-    for (const step of steps) {
-      this.transformVariable(step)
-    }
+    this.hopFromVariable(variable, uri)
   }
 
   /**
