@@ -1,6 +1,6 @@
 {
   "name": "@ldhop/react",
-  "version": "0.0.1-alpha.7",
+  "version": "0.0.1-alpha.8",
   "description": "Follow your nose through linked data resources - for React",
   "keywords": [
     "query",
@@ -36,7 +36,7 @@
     "lint": "eslint src/** --fix --no-error-on-unmatched-pattern"
   },
   "dependencies": {
-    "@ldhop/core": "^0.0.1-alpha.7",
+    "@ldhop/core": "^0.0.1-alpha.8",
     "@types/lodash": "^4.17.0",
     "lodash": "^4.17.21"
   },
