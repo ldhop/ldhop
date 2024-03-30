@@ -1,7 +1,9 @@
-import { QueryAndStore, RdfQuery, fetchRdfDocument } from '@ldhop/core'
-import { QueryKey, UseQueryResult, useQueries } from '@tanstack/react-query'
-import isEqual from 'lodash/isEqual'
-import mapValues from 'lodash/mapValues'
+import type { RdfQuery } from '@ldhop/core'
+import { QueryAndStore, fetchRdfDocument } from '@ldhop/core'
+import type { QueryKey, UseQueryResult } from '@tanstack/react-query'
+import { useQueries } from '@tanstack/react-query'
+import isEqual from 'lodash/isEqual.js'
+import mapValues from 'lodash/mapValues.js'
 import { Quad, Store } from 'n3'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
@@ -9,6 +11,13 @@ type Fetch = typeof globalThis.fetch
 
 type Variables = { [variable: string]: string[] | undefined }
 const defaultGetAdditionalData = () => ({})
+
+const areQuadsEqual = (q1: Quad[], q2: Quad[]) => {
+  if (q1.length !== q2.length) return false
+
+  const set1 = new Set(q1)
+  return q2.every(q => set1.has(q))
+}
 
 export const useLDhopQuery = <AdditionalData extends object = object>({
   query,
@@ -36,6 +45,7 @@ export const useLDhopQuery = <AdditionalData extends object = object>({
   const [outputVariables, setOutputVariables] = useState<Variables>({})
   const [outputStore, setOutputStore] = useState<Store>(new Store())
   const [outputQuads, setOutputQuads] = useState<Quad[]>([])
+  const [isMissing, setIsMissing] = useState(false)
 
   const results = useQueries({
     queries: resources.map(resource => ({
@@ -78,13 +88,15 @@ export const useLDhopQuery = <AdditionalData extends object = object>({
     // get resources that weren't added, and add them to resources
     const missingResources = qas.current.getMissingResources()
 
+    setIsMissing(missingResources.length > 0)
+
     setResources(resources => {
       const newResources: string[] = []
       for (const r of missingResources)
         if (!resources.includes(r)) newResources.push(r)
 
       if (newResources.length === 0) return resources
-      else return [...resources, ...newResources]
+      else return newResources.concat(resources)
     })
 
     const nextOutputVariables = mapValues(
@@ -102,13 +114,14 @@ export const useLDhopQuery = <AdditionalData extends object = object>({
 
     const nextOutputQuads = [...qas.current.store] as Quad[]
     setOutputQuads(outputQuads =>
-      isEqual(outputQuads, nextOutputQuads) ? outputQuads : nextOutputQuads,
+      areQuadsEqual(outputQuads, nextOutputQuads)
+        ? outputQuads
+        : nextOutputQuads,
     )
 
     lastResults.current = results
   }, [results])
 
-  // const { data, pending, ...additionalData } = results
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { data, pending, ...rest } = results
 
@@ -119,8 +132,16 @@ export const useLDhopQuery = <AdditionalData extends object = object>({
       variables: outputVariables,
       qas: qas.current,
       isLoading: results.pending,
+      isMissing,
       ...rest,
     }),
-    [outputQuads, outputStore, outputVariables, rest, results.pending],
+    [
+      isMissing,
+      outputQuads,
+      outputStore,
+      outputVariables,
+      rest,
+      results.pending,
+    ],
   )
 }

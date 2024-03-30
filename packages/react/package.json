@@ -18,6 +18,7 @@
     "url": "https://github.com/ldhop/ldhop/issues"
   },
   "license": "MIT",
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -28,9 +29,10 @@
   },
   "scripts": {
     "test": "",
-    "build": "rm -rf dist && tsc",
-    "prepublishOnly": "yarn build",
-    "prepare": "yarn build",
+    "build": "tsc",
+    "buildFresh": "rm -rf dist && yarn build",
+    "prepublishOnly": "yarn buildFresh",
+    "prepare": "yarn buildFresh",
     "lint": "eslint src/** --fix --no-error-on-unmatched-pattern"
   },
   "dependencies": {
