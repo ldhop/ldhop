@@ -1,0 +1,14 @@
+root: false
+env:
+  browser: true
+  es2020: true
+extends:
+  - ../../.eslintrc.yml
+ignorePatterns:
+  - dist
+plugins:
+  - react-refresh
+rules:
+  react-refresh/only-export-components:
+    - warn
+    - allowConstantExport: true
