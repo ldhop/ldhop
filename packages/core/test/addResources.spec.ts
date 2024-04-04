@@ -1,5 +1,7 @@
 import { expect } from 'chai'
+import { foaf } from 'rdf-namespaces'
 import { QueryAndStore } from '../src/QueryAndStore.js'
+import { parseRdfToQuads } from '../src/utils/helpers.js'
 import {
   communityAccommodationsQuery,
   communityQuery,
@@ -152,5 +154,36 @@ describe('Adding resources to QueryAndStore', () => {
     })
 
     run(qas)
+  })
+
+  it('should add errored resources and result in nothing missing', () => {
+    const qas = new QueryAndStore(friendOfAFriendQuery, {
+      person: new Set(['https://id.person.example/profile#me']),
+    })
+
+    expect(qas.getResources()).to.have.length(1)
+    expect(qas.getResources('missing')).to.have.length(1)
+    expect(qas.getResources('failed')).to.have.length(0)
+    expect(qas.getResources('added')).to.have.length(0)
+
+    qas.addResource(
+      'https://id.person.example/profile',
+      parseRdfToQuads(
+        `<#me> <${foaf.knows}> <https://id2.person.example/profile#me>.`,
+        { baseIRI: 'https://id.person.example/profile' },
+      ),
+    )
+
+    expect(qas.getResources()).to.have.length(2)
+    expect(qas.getResources('missing')).to.have.length(1)
+    expect(qas.getResources('failed')).to.have.length(0)
+    expect(qas.getResources('added')).to.have.length(1)
+
+    qas.addResource('https://id2.person.example/profile', [], 'error')
+
+    expect(qas.getResources()).to.have.length(2)
+    expect(qas.getResources('missing')).to.have.length(0)
+    expect(qas.getResources('failed')).to.have.length(1)
+    expect(qas.getResources('added')).to.have.length(1)
   })
 })

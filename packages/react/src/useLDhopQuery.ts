@@ -1,5 +1,9 @@
-import type { FetchRdfReturnType, RdfQuery } from '@ldhop/core'
-import { QueryAndStore, fetchRdfDocument } from '@ldhop/core'
+import {
+  QueryAndStore,
+  fetchRdfDocument,
+  type FetchRdfReturnType,
+  type RdfQuery,
+} from '@ldhop/core'
 import type { QueryKey, UseQueryResult } from '@tanstack/react-query'
 import { useQueries } from '@tanstack/react-query'
 import isEqual from 'lodash/isEqual.js'

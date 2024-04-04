@@ -1,4 +1,4 @@
-import { NamedNode, Quad, Store, Variable, type Term } from 'n3'
+import { NamedNode, Quad, Store, type Term } from 'n3'
 import type { ValuesType } from 'utility-types'
 import type { Match, RdfQuery } from './index.js'
 import { removeHashFromURI } from './utils/helpers.js'
@@ -18,10 +18,24 @@ const metaUris = {
   status: 'https://ldhop.example/status',
   missing: 'https://ldhop.example/status/missing',
   added: 'https://ldhop.example/status/added',
-  failed: 'https://ldhop.example/status/added',
+  failed: 'https://ldhop.example/status/failed',
   resource: 'https://ldhop.example/resource',
   variable: 'https://ldhop.example/variable',
 }
+
+class Variable extends NamedNode {
+  variable: string
+
+  constructor(variable: string) {
+    super(metaUris.variable + '/' + variable)
+    this.variable = variable
+  }
+
+  static getVar(term: Term) {
+    return <string>term.value.split('/').pop()
+  }
+}
+
 type MetaUris = typeof metaUris
 type Meta = { [P in keyof MetaUris]: NamedNode }
 const meta = <Meta>(
@@ -220,7 +234,8 @@ export class QueryAndStore {
       const node = quad[element]
       if (!el) return true
       if (el.startsWith('?')) {
-        if (variables[element].some(v => v.value === el.slice(1))) return true
+        if (variables[element].some(v => v.equals(new Variable(el.slice(1)))))
+          return true
       }
       if (el === node.value) return true
       return false
@@ -436,8 +451,8 @@ export class QueryAndStore {
     return this.store
       .getQuads(null, meta.variable, null, meta.meta)
       .reduce((dict: { [key: string]: Set<string> }, quad) => {
-        dict[quad.object.value] ??= new Set<string>()
-        dict[quad.object.value].add(quad.subject.value)
+        dict[Variable.getVar(quad.object)] ??= new Set<string>()
+        dict[Variable.getVar(quad.object)].add(quad.subject.value)
         return dict
       }, {})
   }
