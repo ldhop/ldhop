@@ -59,24 +59,22 @@ export const https = (uri: URI): URI => {
  * add document url as graph
  */
 export const fetchRdfDocument = async (uri: URI, fetch: Fetch) => {
+  let data: Quad[] = []
+  let rawData = ''
+  let statusCode = -1
+  let ok = false
+
   try {
     const doc = removeHashFromURI(uri)
     const res = await fullFetch(fetch)(doc)
+    ok = res.ok
+    statusCode = res.status
+    rawData = await res.text()
+    data = parseRdfToQuads(rawData, { baseIRI: doc })
 
-    if (res.ok) {
-      const data = await res.text()
-      return {
-        data: parseRdfToQuads(data, { baseIRI: doc }),
-        rawData: data,
-        hash: hash(data),
-        ok: true,
-        statusCode: res.status,
-      }
-    } else {
-      return { data: [], rawData: '', ok: false, statusCode: res.status }
-    }
+    return { data, rawData, hash: hash(rawData), ok, statusCode }
   } catch {
-    return { data: [], rawData: '', ok: false, statusCode: -1 }
+    return { data, rawData, hash: hash(rawData), ok, statusCode }
   }
 }
 

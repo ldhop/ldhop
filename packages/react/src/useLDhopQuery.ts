@@ -70,7 +70,7 @@ export const useLDhopQuery = <AdditionalData extends object = object>({
       queryFn: () => fetchRdfDocument(resource, fetch),
       staleTime,
     })),
-    combine, //: throttledCombine,
+    combine,
   })
 
   const qas = useRef<QueryAndStore>(new QueryAndStore(query, variableSets))

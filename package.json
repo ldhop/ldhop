@@ -6,9 +6,9 @@
     "packages/*"
   ],
   "scripts": {
-    "lint": "eslint packages --ext .ts",
-    "lint:fix": "eslint packages --ext .ts --fix",
-    "format": "prettier --write '**/*.{ts,md,json,yml}'"
+    "lint": "eslint packages --ext ts,tsx",
+    "lint:fix": "eslint packages --ext ts,tsx --fix",
+    "format": "prettier --write '**/*.{ts,tsx,md,json,yml}'"
   },
   "dependencies": {},
   "devDependencies": {
