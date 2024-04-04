@@ -2,9 +2,10 @@ import { fetch } from '@inrupt/solid-client-authn-browser'
 import { useLDhopQuery } from '@ldhop/react'
 import { useMemo } from 'react'
 import { Graph } from './Graph'
-import { searchAccommodationsQuery } from './queries'
+import { friendOfAFriendQuerySolidCommunityFix } from './queries'
 
 const queryEntryCommunity = import.meta.env.VITE_QUERY_ENTRY_COMMUNITY
+const queryEntryPerson = import.meta.env.VITE_QUERY_ENTRY_PERSON
 
 if (!queryEntryCommunity) throw new Error('Please specify a community')
 
@@ -12,8 +13,11 @@ export const Example = () => {
   const { qas, variables, isLoading, isMissing } = useLDhopQuery(
     useMemo(
       () => ({
-        query: searchAccommodationsQuery,
-        variables: { community: [queryEntryCommunity] },
+        query: friendOfAFriendQuerySolidCommunityFix,
+        variables: {
+          community: [queryEntryCommunity],
+          person: [queryEntryPerson],
+        },
         fetch,
       }),
       [],
@@ -25,8 +29,12 @@ export const Example = () => {
 
     const moves = qas.moves.list
     for (const move of moves) {
-      const sources = Object.values(move.from).flatMap(v => [...v])
-      const targets = Object.values(move.to).flatMap(v => [...v])
+      const sources = Object.values(move.from)
+        .flatMap(v => [...v])
+        .map(v => v.value)
+      const targets = Object.values(move.to)
+        .flatMap(v => [...v])
+        .map(v => v.value)
       if (sources.length !== 1) continue
       if (targets.length !== 1) continue
       for (const source of sources) {

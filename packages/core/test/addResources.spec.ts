@@ -3,6 +3,7 @@ import { QueryAndStore } from '../src/QueryAndStore.js'
 import {
   communityAccommodationsQuery,
   communityQuery,
+  friendOfAFriendQuery,
   personAccommodationQuery2,
   personAccommodationsQuery,
 } from './queries.js'
@@ -143,5 +144,13 @@ describe('Adding resources to QueryAndStore', () => {
 
     qas.addResource('https://person.example/settings/publicTypeIndex.ttl', next)
     expect(qas.moves.list).to.have.length(10)
+  })
+
+  it('should handle gracefully when we encounter something unexpected instead of uri', () => {
+    const qas = new QueryAndStore(friendOfAFriendQuery, {
+      person: new Set(['https://personx.example/profile/card#me']),
+    })
+
+    run(qas)
   })
 })

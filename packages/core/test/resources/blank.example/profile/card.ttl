@@ -1,0 +1,8 @@
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+
+<#me> a foaf:Person;
+    foaf:knows
+        _:testperson,
+        [foaf:knows <https://blank1.example/profile/card#me>].
+
+_:testperson foaf:knows <https://blank2.example/profile/card#me>.

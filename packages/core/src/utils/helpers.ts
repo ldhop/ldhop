@@ -1,6 +1,7 @@
+import hash from '@emotion/hash'
 import type { ParserOptions } from 'n3'
 import { DataFactory, Parser, Quad } from 'n3'
-import type { Required } from 'utility-types'
+import type { PromiseType, Required } from 'utility-types'
 
 type URI = string
 type Fetch = typeof globalThis.fetch
@@ -58,16 +59,30 @@ export const https = (uri: URI): URI => {
  * add document url as graph
  */
 export const fetchRdfDocument = async (uri: URI, fetch: Fetch) => {
-  const doc = removeHashFromURI(uri)
-  const res = await fullFetch(fetch)(doc)
+  try {
+    const doc = removeHashFromURI(uri)
+    const res = await fullFetch(fetch)(doc)
 
-  if (res.ok) {
-    const data = await res.text()
-    return { data: parseRdfToQuads(data, { baseIRI: doc }), response: res }
-  } else if (400 <= res.status && res.status < 500) {
-    return { data: [], response: res }
-  } else throw new Error(`Fetching ${doc} not successful`)
+    if (res.ok) {
+      const data = await res.text()
+      return {
+        data: parseRdfToQuads(data, { baseIRI: doc }),
+        rawData: data,
+        hash: hash(data),
+        ok: true,
+        statusCode: res.status,
+      }
+    } else {
+      return { data: [], rawData: '', ok: false, statusCode: res.status }
+    }
+  } catch {
+    return { data: [], rawData: '', ok: false, statusCode: -1 }
+  }
 }
+
+export type FetchRdfReturnType = PromiseType<
+  ReturnType<typeof fetchRdfDocument>
+>
 
 export const parseRdfToQuads = (
   data: string,

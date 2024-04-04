@@ -1,4 +1,3 @@
-import difference from 'lodash/difference.js'
 import * as n3 from 'n3'
 import {
   dct,
@@ -61,9 +60,8 @@ export const personAccommodationsQuery: RdfQuery = [
       'hospexDocumentForCommunity',
     )
 
-    const hospexDocumentsToRemove = difference(
-      hospexDocuments,
-      hospexDocumentsForCommunity,
+    const hospexDocumentsToRemove = hospexDocuments.filter(
+      hd => !hospexDocumentsForCommunity.includes(hd),
     )
 
     hospexDocumentsToRemove.forEach(hd => {
@@ -298,13 +296,19 @@ export const chatsWithPerson: RdfQuery = [
     type: 'transform variable',
     source: '?chatWithOtherPerson',
     target: '?chatContainer',
-    transform: getContainer,
+    transform: term =>
+      term.termType === 'NamedNode'
+        ? new n3.NamedNode(getContainer(term.value))
+        : undefined,
   },
   {
     type: 'transform variable',
     source: '?otherChat',
     target: '?chatContainer',
-    transform: getContainer,
+    transform: term =>
+      term.termType === 'NamedNode'
+        ? new n3.NamedNode(getContainer(term.value))
+        : undefined,
   },
   {
     type: 'match',

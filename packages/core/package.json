@@ -42,9 +42,8 @@
     "tsx": "^4.7.1"
   },
   "dependencies": {
-    "@types/lodash": "^4.17.0",
+    "@emotion/hash": "^0.9.1",
     "@types/n3": "^1.16.4",
-    "lodash": "^4.17.21",
     "n3": "^1.17.2",
     "utility-types": "^3.10.0"
   }

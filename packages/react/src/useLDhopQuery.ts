@@ -1,11 +1,11 @@
-import type { RdfQuery } from '@ldhop/core'
+import type { FetchRdfReturnType, RdfQuery } from '@ldhop/core'
 import { QueryAndStore, fetchRdfDocument } from '@ldhop/core'
 import type { QueryKey, UseQueryResult } from '@tanstack/react-query'
 import { useQueries } from '@tanstack/react-query'
 import isEqual from 'lodash/isEqual.js'
 import mapValues from 'lodash/mapValues.js'
 import { Quad, Store } from 'n3'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 type Fetch = typeof globalThis.fetch
 
@@ -33,7 +33,7 @@ export const useLDhopQuery = <AdditionalData extends object = object>({
   getQueryKey?: (resource: string) => QueryKey
   staleTime?: number
   getAdditionalData?: (
-    results: UseQueryResult<{ data: Quad[]; response: Response }, Error>[],
+    results: UseQueryResult<FetchRdfReturnType, Error>[],
   ) => AdditionalData
 }) => {
   const variableSets = useMemo(
@@ -47,42 +47,53 @@ export const useLDhopQuery = <AdditionalData extends object = object>({
   const [outputQuads, setOutputQuads] = useState<Quad[]>([])
   const [isMissing, setIsMissing] = useState(false)
 
+  const combine = useCallback(
+    (results: UseQueryResult<FetchRdfReturnType, Error>[]) => ({
+      ...(getAdditionalData(results) ?? {}),
+      data: Object.fromEntries(
+        results.map((result, i) => [resources[i], result?.data] as const),
+        // .filter(([, result]) => result.status === 'success' && result.data)
+        // .map(([resource, result]) => [resource, result.data!]),
+      ),
+      pending: results.some(result => result.isPending),
+    }),
+    [getAdditionalData, resources],
+  )
+
   const results = useQueries({
     queries: resources.map(resource => ({
       queryKey: getQueryKey(resource),
       queryFn: () => fetchRdfDocument(resource, fetch),
       staleTime,
     })),
-    combine: results => ({
-      ...(getAdditionalData(results) ?? {}),
-      data: results
-        .map((result, i) => [result, resources[i]] as const)
-        .filter(([result]) => result.status === 'success' && result.data)
-        .map(([result, resource]) => ({ data: result.data!.data, resource })),
-      pending: results.some(result => result.isPending),
-    }),
+    combine, //: throttledCombine,
   })
 
   const qas = useRef<QueryAndStore>(new QueryAndStore(query, variableSets))
-  const lastResults = useRef<typeof results>(results)
+  const lastResults = useRef(results!.data!)
 
   // if query or variables change, restart the query
   useEffect(() => {
     qas.current = new QueryAndStore(query, variableSets)
     setResources([])
     setOutputStore(qas.current.store)
-    lastResults.current = { data: [] } as AdditionalData & {
-      data: []
-      pending: boolean
-    }
+    lastResults.current = {}
   }, [query, variableSets])
 
   useEffect(() => {
-    for (const result of results.data) {
+    if (!results) return
+    for (const resource in results.data) {
+      const result = results.data[resource]
+      if (!result) continue
+      const lastResource = lastResults.current[resource]
       // find results that weren't added, yet
-      if (!result || lastResults.current.data.includes(result)) continue
+      if (lastResource?.hash === result.hash) continue
       // put them to QueryAndStore
-      qas.current.addResource(result.resource, result.data)
+      qas.current.addResource(
+        resource,
+        result.data,
+        result.ok ? 'success' : 'error',
+      )
     }
 
     // get resources that weren't added, and add them to resources
@@ -119,11 +130,11 @@ export const useLDhopQuery = <AdditionalData extends object = object>({
         : nextOutputQuads,
     )
 
-    lastResults.current = results
+    lastResults.current = results.data
   }, [results])
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { data, pending, ...rest } = results
+  const { data, pending, ...rest } = results!
 
   return useMemo(
     () => ({
@@ -131,7 +142,7 @@ export const useLDhopQuery = <AdditionalData extends object = object>({
       quads: outputQuads,
       variables: outputVariables,
       qas: qas.current,
-      isLoading: results.pending,
+      isLoading: results?.pending,
       isMissing,
       ...rest,
     }),
@@ -141,7 +152,7 @@ export const useLDhopQuery = <AdditionalData extends object = object>({
       outputStore,
       outputVariables,
       rest,
-      results.pending,
+      results?.pending,
     ],
   )
 }

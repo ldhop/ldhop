@@ -1,5 +1,6 @@
 /* eslint-disable import/no-unused-modules */
 import { RdfQuery } from '@ldhop/core'
+import { NamedNode } from 'n3'
 import { foaf } from 'rdf-namespaces'
 
 export {
@@ -23,5 +24,26 @@ export const friendOfAFriendQuery: RdfQuery = [
     predicate: foaf.knows,
     pick: 'object',
     target: '?person',
+  },
+]
+
+export const friendOfAFriendQuerySolidCommunityFix: RdfQuery = [
+  {
+    type: 'match',
+    subject: '?person',
+    predicate: foaf.knows,
+    pick: 'object',
+    target: '?personNext',
+  },
+  {
+    type: 'transform variable',
+    source: '?personNext',
+    target: '?person',
+    transform: term =>
+      term.termType === 'NamedNode'
+        ? new NamedNode(
+            term.value.replace('solid.community', 'solidcommunity.net'),
+          )
+        : undefined,
   },
 ]

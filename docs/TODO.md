@@ -1,5 +1,13 @@
 # TODO
 
+- improve readme of all packages
+- run tests and linter in github actions for packages
+
+## core
+
 - add test coverage
-- improve readme
-- run tests and linter in github actions
+- remove orphaned cycles, which currently keep hanging
+
+## react
+
+## react-example
