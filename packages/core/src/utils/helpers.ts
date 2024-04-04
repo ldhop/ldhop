@@ -63,18 +63,20 @@ export const fetchRdfDocument = async (uri: URI, fetch: Fetch) => {
   let rawData = ''
   let statusCode = -1
   let ok = false
+  let response: Response | undefined = undefined
 
   try {
     const doc = removeHashFromURI(uri)
-    const res = await fullFetch(fetch)(doc)
-    ok = res.ok
-    statusCode = res.status
-    rawData = await res.text()
+    response = await fullFetch(fetch)(doc)
+    ok = response.ok
+    statusCode = response.status
+    rawData = await response.text()
     data = parseRdfToQuads(rawData, { baseIRI: doc })
 
-    return { data, rawData, hash: hash(rawData), ok, statusCode }
+    return { data, rawData, hash: hash(rawData), ok, statusCode, response }
   } catch {
-    return { data, rawData, hash: hash(rawData), ok, statusCode }
+    ok = false
+    return { data, rawData, hash: hash(rawData), ok, statusCode, response }
   }
 }
 
