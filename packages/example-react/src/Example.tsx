@@ -1,8 +1,9 @@
 import { fetch } from '@inrupt/solid-client-authn-browser'
-import { useLDhopQuery } from '@ldhop/react'
+import { useLDhopQuery2 } from '@ldhop/react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { Graph } from './Graph'
-import { friendOfAFriendQuerySolidCommunityFix } from './queries'
+import { readPersonAccommodationsQuery } from './queries'
 
 const queryEntryCommunity = import.meta.env.VITE_QUERY_ENTRY_COMMUNITY
 const queryEntryPerson = import.meta.env.VITE_QUERY_ENTRY_PERSON
@@ -10,19 +11,21 @@ const queryEntryPerson = import.meta.env.VITE_QUERY_ENTRY_PERSON
 if (!queryEntryCommunity) throw new Error('Please specify a community')
 
 export const Example = () => {
-  const { qas, variables, isLoading, isMissing } = useLDhopQuery(
-    useMemo(
-      () => ({
-        query: friendOfAFriendQuerySolidCommunityFix,
-        variables: {
-          community: [queryEntryCommunity],
-          person: [queryEntryPerson],
-        },
-        fetch,
-      }),
-      [],
-    ),
-  )
+  const { qas, variables, loading, missing, isLoading, isMissing, finished } =
+    useLDhopQuery2(
+      useMemo(
+        () => ({
+          query: readPersonAccommodationsQuery,
+          variables: {
+            community: [queryEntryCommunity],
+            person: [queryEntryPerson],
+          },
+          fetch,
+          limit: 30,
+        }),
+        [],
+      ),
+    )
 
   const { nodes, links } = useMemo(() => {
     const links: { source: string; target: string; step: number }[] = []
@@ -58,10 +61,27 @@ export const Example = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qas.moves.list.size, qas.moves.list, variables])
 
+  const queryClient = useQueryClient()
+
+  const handleInvalidate = () => {
+    queryClient.invalidateQueries({
+      queryKey: [
+        'rdfDocument',
+        'https://data.mrkvon.org/hospex/sleepy-bike/card',
+      ],
+    })
+  }
+
   return (
     <>
-      <div>{isMissing && 'missing'}</div>
-      <div>{isLoading && 'loading'}</div>
+      <button onClick={handleInvalidate}>Invalidate person</button>
+      <div>
+        {isLoading && 'loading'} {isMissing && 'missing'}
+      </div>
+      <div>offers: {variables.offer?.size}</div>
+      <div>finished: {finished}</div>
+      <div>missing: {missing}</div>
+      <div>loading: {loading}</div>
       {/* <pre>{JSON.stringify(variablesCount, null, 2)}</pre> */}
       <Graph nodes={nodes} links={links} />
     </>

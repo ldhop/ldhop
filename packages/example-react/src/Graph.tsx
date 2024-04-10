@@ -10,7 +10,7 @@ import {
 } from 'd3-force'
 import { useCallback, useEffect, useRef } from 'react'
 
-const color = [
+const color: string[] = [
   '#b81e48',
   '#f06744',
   '#fdbf6f',
@@ -20,6 +20,13 @@ const color = [
   '#3585bb',
   '#496aaf',
 ]
+
+const varStyles: { [variable: string]: string } = {
+  person: 'pink',
+  publicTypeIndex: 'yellow',
+  hospexDocument: 'blue',
+  offer: 'red',
+}
 
 interface Node extends SimulationNodeDatum {
   id: string
@@ -69,6 +76,7 @@ export const Graph = ({
         (link.target as unknown as Node).y! + height / 2,
       )
       context.strokeStyle = color[link.step]
+      context.strokeStyle = link.step === 10 ? 'red' : 'gray'
       context.stroke()
     })
 
@@ -76,26 +84,24 @@ export const Graph = ({
     nodesRef.current.forEach(node => {
       context.beginPath()
       context.arc(node.x! + width / 2, node.y! + height / 2, 5, 0, 2 * Math.PI)
-      context.fillStyle = node.variables.has('publicTypeIndex')
-        ? '#ff2'
-        : node.variables.has('person')
-          ? '#f2f'
-          : node.variables.has('offer')
-            ? '#2ff'
-            : '#333'
+
+      context.fillStyle = 'black'
+      for (const variable of node.variables) {
+        context.fillStyle = varStyles[variable]
+      }
+
       context.fill()
+      context.fillStyle = 'black'
     })
   }, [])
 
   const update = useCallback(
     (links: InputLink[], vars: { [id: string]: Set<string> }) => {
-      const nodes = [
-        ...new Set(links.flatMap(({ source, target }) => [source, target])),
-      ].map(
-        id =>
-          nodesRef.current.find(n => n.id === id) ?? {
-            id,
-            variables: vars[id] ?? new Set(),
+      const nodes = Object.entries(vars).map(
+        ([uri, vars]) =>
+          nodesRef.current.find(n => n.id === uri) ?? {
+            id: uri,
+            variables: vars,
           },
       )
 
