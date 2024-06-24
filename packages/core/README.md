@@ -180,6 +180,12 @@ const webIdProfileQuery: RdfQuery = [
 ]
 ```
 
+The query corresponds to the following picture. The resources identified by the URIs within the variables in **bold circles** are fetched while it is executed.
+
+![webId profile query visualized](https://raw.githubusercontent.com/ldhop/ldhop/main/docs/webid_profile_query_visual.png)
+
+<!-- ![webId profile query visualized](../../docs/webid_profile_query_visual.png) -->
+
 ## API
 
 ### QueryAndStore
