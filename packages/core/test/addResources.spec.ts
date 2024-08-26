@@ -44,26 +44,26 @@ describe('Adding resources to QueryAndStore', () => {
       .and.to.deep.equal(['https://community.example/group'])
   })
 
-  it("should make steps through person's profile and find all accommodation offers of the community", () => {
+  it("should make steps through person's profile and find all accommodation offers of the community", async () => {
     const qas = new QueryAndStore(personAccommodationsQuery, {
       person: new Set(['https://person.example/profile/card#me']),
       community: new Set(['https://community.example/community#us']),
     })
 
-    run(qas)
+    await run(qas)
 
     const offers = qas.getVariable('offer')
 
     expect(offers).to.have.length(2)
   })
 
-  it("should make steps through person's profile and find all accommodation offers of the community (2)", () => {
+  it("should make steps through person's profile and find all accommodation offers of the community (2)", async () => {
     const qas = new QueryAndStore(personAccommodationQuery2, {
       person: new Set(['https://person.example/profile/card#me']),
       community: new Set(['https://community.example/community#us']),
     })
 
-    run(qas)
+    await run(qas)
 
     const offers = qas.getVariable('offer')
 
@@ -132,13 +132,13 @@ describe('Adding resources to QueryAndStore', () => {
     expect(missingAfter).to.have.length(3)
   })
 
-  it('should not save duplicate moves', () => {
+  it('should not save duplicate moves', async () => {
     const qas = new QueryAndStore(personAccommodationQuery2, {
       community: new Set(['https://community.example/community#us']),
       person: new Set(['https://person.example/profile/card#me']),
     })
 
-    run(qas)
+    await run(qas)
 
     expect(qas.moves.list).to.have.length(10)
 
@@ -148,12 +148,12 @@ describe('Adding resources to QueryAndStore', () => {
     expect(qas.moves.list).to.have.length(10)
   })
 
-  it('should handle gracefully when we encounter something unexpected instead of uri', () => {
+  it('should handle gracefully when we encounter something unexpected instead of uri', async () => {
     const qas = new QueryAndStore(friendOfAFriendQuery, {
       person: new Set(['https://personx.example/profile/card#me']),
     })
 
-    run(qas)
+    await run(qas)
   })
 
   it('should add errored resources and result in nothing missing', () => {

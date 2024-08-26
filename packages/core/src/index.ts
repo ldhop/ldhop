@@ -1,7 +1,11 @@
 import type { Term } from 'n3'
 import type { QueryAndStore } from './QueryAndStore.js'
 export { QueryAndStore } from './QueryAndStore.js'
-export { fetchRdfDocument, type FetchRdfReturnType } from './utils/helpers.js'
+export {
+  fetchRdfDocument,
+  run,
+  type FetchRdfReturnType,
+} from './utils/helpers.js'
 
 export type TransformStore = (qas: QueryAndStore) => void
 

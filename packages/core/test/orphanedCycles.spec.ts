@@ -7,14 +7,14 @@ import { fetchRdf } from './resources/index.js'
 import { run } from './run.js'
 
 describe.skip('Handling orphaned cycles', () => {
-  it('should clear disconnected cycles', () => {
+  it('should clear disconnected cycles', async () => {
     const resource = 'https://personx.example/profile/card'
     const personx = resource + '#me'
     const qas = new QueryAndStore(friendOfAFriendQuery, {
       person: new Set([personx]),
     })
 
-    run(qas)
+    await run(qas)
 
     const personsBefore = qas.getVariable('person')
     expect(personsBefore).to.have.length(7)

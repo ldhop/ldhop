@@ -10,7 +10,7 @@ yarn add @ldhop/core
 ```
 
 ```ts
-import { QueryAndStore, RdfQuery } from '@ldhop/core'
+import { QueryAndStore, RdfQuery, fetchRdfDocument, run } from '@ldhop/core'
 import { foaf, rdfs } from 'rdf-namespaces'
 
 // specify the steps of the query
@@ -45,25 +45,14 @@ const qas = new QueryAndStore(friendOfAFriendQuery, initialVariables)
 
 // now, you need to ask for missing resources, fetch them, add them to QueryAndStore
 // and keep doing that until there are no missing resources left
-const run = async (qas: QueryAndStore) => {
-  let missingResources = qas.getMissingResources()
-
-  while (missingResources.length > 0) {
-    let quads: Quad[] = []
-    const res = missingResources[0]
-    try {
-      quads = await fetchRdf(missingResources[0])
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error(e)
-    } finally {
-      qas.addResource(res, quads)
-      missingResources = qas.getMissingResources()
-    }
-  }
+// you can use a simple helper provided by this library
+await run(qas, fetch)
+// or implement your own walk, using the following methods repeatedly:
+const [missingResource] = qas.getMissingResources()
+if (missingResource) {
+  const { data } = await fetchRdfDocument(missingResource, fetch)
+  qas.addResource(missingResource, data)
 }
-
-await run(qas)
 
 // now, you have the whole RDF graph collected in qas.store, which is n3.Store
 // each triple has a graph element that corresponds to the url of the document of that triple
@@ -217,4 +206,17 @@ Fetch turtle document and parse it to ldhop-compatible quads
 ```ts
 const { data } = await fetchRdfDocument(uri, fetch)
 qas.addResource(uri, data)
+```
+
+### run
+
+Execute the ldhop query until the walk through the graph is finished.
+
+It runs simple loop that continues as long as `qas.getMissingResources()` returns something: It fetches one missing resource, adds it with `qas.addResource()` and repeats. You can probably implement something safer or more efficient yourself, e.g. fetch missing resources in parallel.
+
+You can provide custom (e.g. authenticated) fetch.
+
+```ts
+const qas = new QueryAndStore(query, initialVariables)
+await run(qas, fetch)
 ```

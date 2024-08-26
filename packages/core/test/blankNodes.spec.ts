@@ -6,13 +6,13 @@ import { fetchRdf } from './resources/index.js'
 import { run } from './run.js'
 
 describe('blank nodes', () => {
-  it('should handle blank nodes correctly', () => {
+  it('should handle blank nodes correctly', async () => {
     const base = 'https://blank.example/profile/card'
     const qas = new QueryAndStore(friendOfAFriendQuery, {
       person: new Set([base + '#me']),
     })
 
-    run(qas)
+    await run(qas)
 
     const persons = qas.getVariable('person')
     // console.log(persons)
@@ -25,17 +25,17 @@ describe('blank nodes', () => {
     )
 
     qas.addResource(base, testPerson)
-    run(qas)
+    await run(qas)
     expect(qas.getVariable('person')).to.have.length(6)
     expect(qas.moves.list.size).to.equal(7)
 
     qas.addResource(base, testPersonWithoutLinks)
-    run(qas)
+    await run(qas)
     expect(qas.getVariable('person')).to.have.length(1)
     expect(qas.moves.list.size).to.equal(1)
 
     qas.addResource(base, testPerson)
-    run(qas)
+    await run(qas)
     expect(qas.getVariable('person')).to.have.length(6)
     expect(qas.moves.list.size).to.equal(7)
   })

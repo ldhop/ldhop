@@ -12,13 +12,13 @@ import { fetchRdf } from './resources/index.js'
 import { run } from './run.js'
 
 describe('Replacing resources in QueryAndStore', () => {
-  it('[remove link] should correctly update the results', () => {
+  it('[remove link] should correctly update the results', async () => {
     const qas = new QueryAndStore(personAccommodationsQuery, {
       person: new Set(['https://person.example/profile/card#me']),
       community: new Set(['https://community.example/community#us']),
     })
 
-    run(qas)
+    await run(qas)
 
     const offersBefore = qas.getVariable('offer')
     expect(offersBefore).to.have.length(2)
@@ -43,7 +43,7 @@ describe('Replacing resources in QueryAndStore', () => {
       updated,
     )
 
-    run(qas)
+    await run(qas)
 
     const offersAfter = qas.getVariable('offer')
     expect(offersAfter).to.have.length(1)
@@ -61,13 +61,13 @@ describe('Replacing resources in QueryAndStore', () => {
     expect(matches).to.have.length(1)
   })
 
-  it('[add link] should correctly update the results', () => {
+  it('[add link] should correctly update the results', async () => {
     const qas = new QueryAndStore(personAccommodationsQuery, {
       person: new Set(['https://person.example/profile/card#me']),
       community: new Set(['https://community.example/community#us']),
     })
 
-    run(qas)
+    await run(qas)
 
     const offersBefore = qas.getVariable('offer')
     expect(offersBefore).to.have.length(2)
@@ -92,7 +92,7 @@ describe('Replacing resources in QueryAndStore', () => {
       quads,
     )
 
-    run(qas)
+    await run(qas)
 
     const offersAfter = qas.getVariable('offer')
     expect(offersAfter).to.have.length(3)
@@ -118,13 +118,13 @@ describe('Replacing resources in QueryAndStore', () => {
     ).to.equal(3)
   })
 
-  it('[remove community] should correctly update the results', () => {
+  it('[remove community] should correctly update the results', async () => {
     const qas = new QueryAndStore(personAccommodationsQuery, {
       person: new Set(['https://person.example/profile/card#me']),
       community: new Set(['https://community.example/community#us']),
     })
 
-    run(qas)
+    await run(qas)
 
     const offersBefore = qas.getVariable('offer')
     expect(offersBefore).to.have.length(2)
@@ -147,7 +147,7 @@ describe('Replacing resources in QueryAndStore', () => {
       updated,
     )
 
-    run(qas)
+    await run(qas)
 
     const offersAfter = qas.getVariable('offer')
     expect(offersAfter).to.have.length(0)
@@ -173,19 +173,19 @@ describe('Replacing resources in QueryAndStore', () => {
     ).to.equal(0)
   })
 
-  it('should work fine with hopping in circles', () => {
+  it('should work fine with hopping in circles', async () => {
     const qas = new QueryAndStore(friendOfAFriendQuery, {
       person: new Set(['https://person.example/profile/card#me']),
     })
 
-    run(qas)
+    await run(qas)
 
     const personsBefore = qas.getVariable('person')
     expect(personsBefore).to.have.length(4)
 
     qas.addResource('https://person2.example/profile/card', [])
 
-    run(qas)
+    await run(qas)
 
     const personsAfter = qas.getVariable('person')
     // there will be remaining person and person2
@@ -195,18 +195,18 @@ describe('Replacing resources in QueryAndStore', () => {
     // now, let's try to revert it
     const person2 = fetchRdf('https://person2.example/profile/card')
     qas.addResource('https://person2.example/profile/card', person2)
-    run(qas)
+    await run(qas)
     expect(qas.getVariable('person')).to.have.length(4)
   })
 
-  it('should allow replacing all resources with empty resources', () => {
+  it('should allow replacing all resources with empty resources', async () => {
     const qas = new QueryAndStore(chatsWithPerson, {
       person: new Set(['https://person.example/profile/card#me']),
       otherPerson: new Set(['https://person2.example/profile/card#me']),
     })
     expect(qas.getVariable('person')).to.have.length(1)
 
-    run(qas)
+    await run(qas)
 
     const messages = qas.getVariable('message')
 
