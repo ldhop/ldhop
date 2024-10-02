@@ -1,6 +1,7 @@
 import { fetch } from '@inrupt/solid-client-authn-browser'
+import { type RdfQuery } from '@ldhop/core'
 import { useLDhopQuery } from '@ldhop/react'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Graph } from './Graph'
 import { friendOfAFriendQuerySolidCommunityFix } from './queries'
 
@@ -9,18 +10,36 @@ const queryEntryPerson = import.meta.env.VITE_QUERY_ENTRY_PERSON
 
 if (!queryEntryCommunity) throw new Error('Please specify a community')
 
+const queryOptions: {
+  [key: string]: {
+    query: RdfQuery
+    startingPoints: { [variable: string]: string[] | undefined }
+  }
+} = {
+  empty: {
+    query: [],
+    startingPoints: {},
+  },
+  foaf: {
+    query: friendOfAFriendQuerySolidCommunityFix,
+    startingPoints: {
+      community: [queryEntryCommunity],
+      person: [queryEntryPerson],
+    },
+  },
+}
+
 export const Example = () => {
+  const [selectedQuery, setSelectedQuery] = useState('foaf')
+
   const { qas, variables, isLoading, isMissing } = useLDhopQuery(
     useMemo(
       () => ({
-        query: friendOfAFriendQuerySolidCommunityFix,
-        variables: {
-          community: [queryEntryCommunity],
-          person: [queryEntryPerson],
-        },
+        query: queryOptions[selectedQuery].query,
+        variables: queryOptions[selectedQuery].startingPoints,
         fetch,
       }),
-      [],
+      [selectedQuery],
     ),
   )
 
@@ -60,6 +79,24 @@ export const Example = () => {
 
   return (
     <>
+      <fieldset>
+        {Object.keys(queryOptions).map(qo => (
+          <div>
+            <label>
+              <input
+                type="radio"
+                name="queryOption"
+                value={qo}
+                checked={selectedQuery === qo}
+                onChange={e => {
+                  setSelectedQuery(e.target.value)
+                }}
+              />{' '}
+              {qo}
+            </label>
+          </div>
+        ))}
+      </fieldset>
       <div>{isMissing && 'missing'}</div>
       <div>{isLoading && 'loading'}</div>
       {/* <pre>{JSON.stringify(variablesCount, null, 2)}</pre> */}

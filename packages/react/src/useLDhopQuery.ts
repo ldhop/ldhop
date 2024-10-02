@@ -47,7 +47,7 @@ export const useLDhopQuery = <AdditionalData extends object = object>({
 
   const [resources, setResources] = useState<string[]>([])
   const [outputVariables, setOutputVariables] = useState<Variables>({})
-  const [outputStore, setOutputStore] = useState<Store>(new Store())
+  const [outputStore, setOutputStore] = useState(new Store())
   const [outputQuads, setOutputQuads] = useState<Quad[]>([])
   const [isMissing, setIsMissing] = useState(false)
 
@@ -79,7 +79,8 @@ export const useLDhopQuery = <AdditionalData extends object = object>({
   // if query or variables change, restart the query
   useEffect(() => {
     qas.current = new QueryAndStore(query, variableSets)
-    setResources([])
+    const missingResources = qas.current.getMissingResources()
+    setResources(missingResources)
     setOutputStore(qas.current.store)
     lastResults.current = {}
   }, [query, variableSets])
