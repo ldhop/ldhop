@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2025-01-25
+
 ### Fixed
 
 - **core**: Fix incorrect move in hop logic when variable is other than subject. [d453752eebf07c83e633634a8477bcc1483ba5a0]
@@ -15,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 
 - Start using [Conventional Commits](https://www.conventionalcommits.org).
-- Add this changelog following [Keep a Changelog](https://keepachangelog.com).
+- Add this changelog following [Keep a Changelog](https://keepachangelog.com). [ff9716f1cc93437f18e7916560f885acea41dc6a]
 
 ## [0.0.1-alpha.16] - 2024-10-02
 
