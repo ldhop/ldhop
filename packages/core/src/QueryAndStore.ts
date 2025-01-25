@@ -370,7 +370,7 @@ export class QueryAndStore {
                   const from: Variables = {}
                   for (const el of quadElements)
                     if (step[el]?.startsWith('?'))
-                      from[step[el]!.slice(1)] = new Set([s!])
+                      from[step[el]!.slice(1)] = new Set([quad[el]])
                   const to = { [targetVar]: new Set([target]) }
                   this.moves.add({ from, to, step: i, quad })
                   this.addVariable(targetVar, target)

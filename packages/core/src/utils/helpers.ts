@@ -108,15 +108,18 @@ export const run = async (qas: QueryAndStore, fetch: Fetch) => {
   let missingResources = qas.getMissingResources()
 
   while (missingResources.length > 0) {
-    let quads: Quad[] = []
     const res = missingResources[0]
     try {
-      ;({ data: quads } = await fetchRdfDocument(missingResources[0], fetch))
+      const { data: quads, response } = await fetchRdfDocument(
+        missingResources[0],
+        fetch,
+      )
+      qas.addResource(res, quads, response?.ok ? 'success' : 'error')
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error(e)
+      qas.addResource(res, [], 'error')
     } finally {
-      qas.addResource(res, quads)
       missingResources = qas.getMissingResources()
     }
   }
