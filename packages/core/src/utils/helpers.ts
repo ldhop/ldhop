@@ -54,6 +54,14 @@ export const https = (uri: URI): URI => {
   return url.toString()
 }
 
+const supportedMimeTypes = [
+  'text/turtle',
+  'application/trig',
+  'application/n-triples',
+  'application/n-quads',
+  'text/n3',
+]
+
 /**
  * Fetch rdf document
  * parse it into rdf Dataset
@@ -68,11 +76,16 @@ export const fetchRdfDocument = async (uri: URI, fetch: Fetch) => {
 
   try {
     const doc = removeHashFromURI(uri)
-    response = await fullFetch(fetch)(doc)
+    response = await fullFetch(fetch)(doc, {
+      headers: { accept: supportedMimeTypes.join(',') },
+    })
     ok = response.ok
     statusCode = response.status
     rawData = await response.text()
-    data = parseRdfToQuads(rawData, { baseIRI: doc })
+    data = parseRdfToQuads(rawData, {
+      baseIRI: doc,
+      format: response.headers.get('content-type') ?? undefined,
+    })
 
     return { data, rawData, hash: hash(rawData), ok, statusCode, response }
   } catch {

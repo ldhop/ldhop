@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **core**: Send `Accept` header with supported mime-types when fetching a resource.
+- **example-react**: Recreate yarn.lock to get rid of @tanstack/react-query duplicate.
+
 ## [0.1.0] - 2025-01-25
 
 ### Fixed
