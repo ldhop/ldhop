@@ -20,6 +20,7 @@ const staticFetch = (async (uri: string) => {
     ok: true,
     text: async () => data,
     status: 200,
+    headers: new Headers(),
   }
 }) as Fetch
 
