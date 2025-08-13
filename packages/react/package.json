@@ -28,7 +28,6 @@
     "access": "public"
   },
   "scripts": {
-    "test": "",
     "build": "tsc",
     "buildFresh": "rm -rf dist && yarn build",
     "prepublishOnly": "yarn buildFresh",
