@@ -114,6 +114,10 @@ type TransformVariable = {
 type TransformStore = (qas: QueryAndStore) => void
 ```
 
+#### Filtering
+
+Filtering can be achieved using `match` step, and assigning the result to a new variable.
+
 ### Example query: Fetch Solid WebId Profile
 
 See [Solid WebID Profile specification](https://solid.github.io/webid-profile/#discovery) for context.

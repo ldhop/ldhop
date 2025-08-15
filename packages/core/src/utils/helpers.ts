@@ -2,7 +2,9 @@ import hash from '@emotion/hash'
 import type { ParserOptions } from 'n3'
 import { DataFactory, Parser, Quad } from 'n3'
 import type { PromiseType, Required } from 'utility-types'
-import type { QueryAndStore } from '../QueryAndStore.js'
+import type { QueryAndStore } from '../index.js'
+import type { LdhopEngine } from '../LdhopEngine.js'
+import type { Variable } from '../types.js'
 
 type URI = string
 export type Fetch = typeof globalThis.fetch
@@ -42,15 +44,6 @@ const fullFetch =
 export const removeHashFromURI = (uri: URI): URI => {
   const url = new URL(uri)
   url.hash = ''
-  return url.toString()
-}
-
-/**
- * Convert (http) uri to uri with https://
- */
-export const https = (uri: URI): URI => {
-  const url = new URL(uri)
-  url.protocol = 'https'
   return url.toString()
 }
 
@@ -117,14 +110,18 @@ export const parseRdfToQuads = (
 /**
  * Follow your nose through the linked data graph by query
  */
-export const run = async (qas: QueryAndStore, fetch: Fetch) => {
+export const run = async <V extends Variable>(
+  qas: LdhopEngine<V> | QueryAndStore<V>,
+  fetch: Fetch,
+) => {
   let missingResources = qas.getMissingResources()
 
-  while (missingResources.length > 0) {
-    const res = missingResources[0]
+  while ([...missingResources].length > 0) {
+    const missing = Array.from(missingResources)
+    const res = missing[0]
     try {
       const { data: quads, response } = await fetchRdfDocument(
-        missingResources[0],
+        missing[0],
         fetch,
       )
       qas.addResource(res, quads, response?.ok ? 'success' : 'error')

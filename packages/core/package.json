@@ -37,7 +37,7 @@
     "@types/node": "^20.11.28",
     "chai": "^4.3.10",
     "mocha": "^10.2.0",
-    "rdf-namespaces": "^1.12.0",
+    "rdf-namespaces": "^1.15.0",
     "ts-node": "^10.9.1",
     "tsx": "^4.7.1"
   },

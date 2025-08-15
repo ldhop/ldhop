@@ -1,7 +1,6 @@
 // not sure how to resolve errors resulting from this eslint rule
 // it's because we overwrite exports from rdf-namespaces here
 import * as ns from 'rdf-namespaces'
-import { https } from '../src/utils/helpers.js'
 
 const base = {
   geo: 'http://www.w3.org/2003/01/geo/wgs84_pos#',
@@ -10,31 +9,23 @@ const base = {
   ui: 'http://www.w3.org/ns/ui#',
   wf: 'http://www.w3.org/2005/01/wf/flow#',
   xsd: 'http://www.w3.org/2001/XMLSchema#',
-}
+} as const
 
 export const hospex = {
-  Accommodation: base.hospex + 'Accommodation',
-  PersonalHospexDocument: base.hospex + 'PersonalHospexDocument',
-  offers: base.hospex + 'offers',
-  offeredBy: base.hospex + 'offeredBy',
-  storage: base.hospex + 'storage',
-}
-
-export const as = {
-  ...(Object.fromEntries(
-    Object.entries(ns.as).map(([key, value]) => [key, https(value)]),
-  ) as typeof ns.as),
-  // subject is missing in rdf-namespaces, but exists in as
-  subject: https(ns.as.object.replace('object', 'subject')),
-}
+  Accommodation: `${base.hospex}Accommodation`,
+  PersonalHospexDocument: `${base.hospex}PersonalHospexDocument`,
+  offers: `${base.hospex}offers`,
+  offeredBy: `${base.hospex}offeredBy`,
+  storage: `${base.hospex}storage`,
+} as const
 
 export const wf = {
-  participation: base.wf + 'participation',
-  participant: base.wf + 'participant',
+  participation: `${base.wf}participation`,
+  participant: `${base.wf}participant`,
   ...ns.wf,
-}
+} as const
 
 export const meeting = {
-  LongChat: base.meeting + 'LongChat',
+  LongChat: `${base.meeting}LongChat`,
   ...ns.meeting,
-}
+} as const

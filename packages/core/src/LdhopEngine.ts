@@ -1,17 +1,28 @@
 import { NamedNode, Quad, Store, type Term } from 'n3'
-import type { ValuesType } from 'utility-types'
-import type { Match, RdfQuery, Variable as VariableType } from './types.js'
+import type { LdhopQuery, Match, Variable } from './types.js'
 import { removeHashFromURI } from './utils/helpers.js'
 
-type Variables = { [key: string]: Set<Term> }
-type UriVariables = { [key: string]: Set<string> }
+type Variables<V extends Variable> = Partial<{ [key in V]: Set<Term> }>
+type UriVariables<V extends Variable> = Partial<{ [key in V]: Set<string> }>
 
-type Move = { from: Variables; to: Variables; step: number; quad?: Quad }
+interface Move<V extends Variable> {
+  from: Variables<V>
+  to: Variables<V>
+  // step: LdhopQuery<V>[number]
+  step: number
+  quad?: Quad
+}
 
 const stringifyQuad = (quad: Quad) => JSON.stringify(quad.toJSON())
 
-const quadElements = ['subject', 'predicate', 'object', 'graph'] as const
-type QuadElement = ValuesType<typeof quadElements>
+enum QuadElement {
+  subject = 'subject',
+  predicate = 'predicate',
+  object = 'object',
+  graph = 'graph',
+}
+
+const quadElements = Object.values(QuadElement)
 
 const metaUris = {
   meta: 'https://ldhop.example/meta',
@@ -23,16 +34,16 @@ const metaUris = {
   variable: 'https://ldhop.example/variable',
 }
 
-class Variable extends NamedNode {
-  variable: string
+class VVVVVVVVVVV<V extends Variable> extends NamedNode {
+  variable: V
 
-  constructor(variable: string) {
+  constructor(variable: V) {
     super(metaUris.variable + '/' + variable)
     this.variable = variable
   }
 
-  static getVar(term: Term) {
-    return <string>term.value.split('/').pop()
+  static getVar<V extends Variable>(term: Term) {
+    return term.value.split('/').pop() as V
   }
 }
 
@@ -44,29 +55,34 @@ const meta = <Meta>(
   )
 )
 
-class Moves {
-  list: Set<Move> = new Set()
-  provides: { [key: string]: Set<Move> } = {}
-  providersOf: { [key: string]: Set<Move> } = {}
-  byQuad: { [key: string]: Set<Move> } = {}
+class Moves<V extends Variable> {
+  list: Set<Move<V>> = new Set()
+  provides: { [key: string]: Set<Move<V>> } = {}
+  providersOf: { [key: string]: Set<Move<V>> } = {}
+  byQuad: { [key: string]: Set<Move<V>> } = {}
 
-  add(move: Move) {
+  add(move: Move<V>) {
     // add step to list
     this.list.add(move)
     // add step to "provides" index
-    Object.values(move.from).forEach(terms => {
-      terms.forEach(term => {
-        this.provides[term.value] ??= new Set()
-        this.provides[term.value].add(move)
-      })
-    })
+    for (const uri in move.from) {
+      if (isVariable(uri)) {
+        for (const term of move.from[uri]!) {
+          this.provides[term.value] ??= new Set()
+          this.provides[term.value].add(move)
+        }
+      }
+    }
+
     // add step to "providersOf" index
-    Object.values(move.to).forEach(terms => {
-      terms.forEach(term => {
-        this.providersOf[term.value] ??= new Set()
-        this.providersOf[term.value].add(move)
-      })
-    })
+    for (const uri in move.to) {
+      if (isVariable(uri)) {
+        for (const term of move.to[uri]!) {
+          this.providersOf[term.value] ??= new Set()
+          this.providersOf[term.value].add(move)
+        }
+      }
+    }
 
     // add step to byQuad index
     if (move.quad) {
@@ -75,20 +91,24 @@ class Moves {
     }
   }
 
-  remove(move: Move) {
+  remove(move: Move<V>) {
     this.list.delete(move)
     // remove step from "provides" index
-    Object.values(move.from).forEach(terms => {
-      terms.forEach(term => {
-        this.provides[term.value].delete(move)
-      })
-    })
+    for (const uri in move.from) {
+      if (isVariable(uri) && move.from[uri]) {
+        for (const term of move.from[uri]) {
+          this.provides[term.value].delete(move)
+        }
+      }
+    }
     // remove step from "providersOf" index
-    Object.values(move.to).forEach(terms => {
-      terms.forEach(term => {
-        this.providersOf[term.value].delete(move)
-      })
-    })
+    for (const uri in move.to) {
+      if (isVariable(uri) && move.to[uri]) {
+        for (const term of move.to[uri]) {
+          this.providersOf[term.value].delete(move)
+        }
+      }
+    }
 
     // remove step from byQuad index
     if (move.quad) {
@@ -101,10 +121,10 @@ class Moves {
     let output = ''
     this.list.forEach(move => {
       const from = Object.values(move.from)
-        .flatMap(f => Array.from(f))
+        .flatMap(f => Array.from(f as Set<Term>))
         .map(f => f.value)
       const to = Object.values(move.to)
-        .flatMap(f => Array.from(f))
+        .flatMap(f => Array.from(f as Set<Term>))
         .map(f => f.value)
 
       output += from.concat(' ') + ' ==> ' + to.concat(' ')
@@ -114,44 +134,45 @@ class Moves {
   }
 }
 
-export class QueryAndStore<V extends VariableType = VariableType> {
+export class LdhopEngine<V extends Variable = Variable> {
   store: Store
-  query: RdfQuery<V>
-  moves = new Moves()
+  query: LdhopQuery<V>
+  moves = new Moves<V>()
 
   constructor(
-    query: RdfQuery<V>,
-    startingPoints: UriVariables,
+    query: LdhopQuery<V>,
+    startingPoints: UriVariables<V>,
     store = new Store(),
   ) {
     this.store = store
     this.query = query
 
-    Object.entries(startingPoints).forEach(([variable, uris]) => {
-      variable = variable.startsWith('?') ? variable.slice(1) : variable
-      uris.forEach(uri => {
-        // we add a move for each variable that is provided at the beginning
-        // sometimes circular reference would try to remove them
-        // we prevent that by making sure the initial variables don't get orphaned, with this move
-        const term = new NamedNode(uri)
+    // we add a move for each variable that is provided at the beginning
+    // sometimes circular reference would try to remove them
+    // we prevent that by making sure the initial variables don't get orphaned, with this move
+    for (const key in startingPoints) {
+      if (isVariable<V>(key) && startingPoints[key]) {
+        for (const value of startingPoints[key]) {
+          const term = new NamedNode(value)
 
-        this.moves.add({
-          from: {},
-          to: { [variable]: new Set([term]) },
-          step: -1,
-        })
-        this.addVariable(variable, term)
-      })
-    })
+          this.moves.add({
+            from: {} as Variables<V>,
+            to: { [key]: new Set([term]) } as Variables<V>,
+            step: -1,
+          })
+          this.addVariable(key, term)
+        }
+      }
+    }
   }
 
   getMissingResources() {
     return this.getResources('missing')
   }
 
-  private removeVariable(variable: string, node: Term) {
+  private removeVariable(variable: V, node: Term) {
     this.store.removeQuad(
-      new Quad(node, meta.variable, new Variable(variable), meta.meta),
+      new Quad(node, meta.variable, new VVVVVVVVVVV(variable), meta.meta),
     )
 
     if (node.termType === 'NamedNode') {
@@ -181,7 +202,7 @@ export class QueryAndStore<V extends VariableType = VariableType> {
       const nextVariables = move.to
       this.moves.remove(move)
       for (const variable in nextVariables) {
-        nextVariables[variable].forEach(nextTerm => {
+        nextVariables[variable]!.forEach(nextTerm => {
           // see if there's any provision of this variable left
           const a = Array.from(
             this.moves.providersOf[nextTerm.value] ?? new Set(),
@@ -228,7 +249,7 @@ export class QueryAndStore<V extends VariableType = VariableType> {
         el,
         this.store.getObjects(quad[el], meta.variable, meta.meta),
       ]),
-    ) as Record<QuadElement, Variable[]>
+    ) as Record<QuadElement, VVVVVVVVVVV<V>[]>
 
     const matchQuadElement = (
       step: Match<V>,
@@ -237,8 +258,8 @@ export class QueryAndStore<V extends VariableType = VariableType> {
       const el = step[element]
       const node = quad[element]
       if (!el) return true
-      if (el.startsWith('?')) {
-        if (variables[element].some(v => v.equals(new Variable(el.slice(1)))))
+      if (isVariable<V>(el)) {
+        if (variables[element].some(v => v.equals(new VVVVVVVVVVV(el))))
           return true
       }
       if (el === node.value) return true
@@ -260,15 +281,15 @@ export class QueryAndStore<V extends VariableType = VariableType> {
     // hop the steps and assign new variables
     for (const [i, step] of relevantSteps) {
       // save the move
-      const from: Variables = {}
+      const from: Variables<V> = {}
       for (const element of quadElements) {
         const el = step[element]
-        if (el?.startsWith('?')) from[el.slice(1)] = new Set([quad[element]])
+        if (isVariable<V>(el)) from[el] = new Set([quad[element]])
       }
-      const to = { [step.target.slice(1)]: new Set([quad[step.pick]]) }
+      const to = { [step.target]: new Set([quad[step.pick]]) }
       this.moves.add({ step: i, from, to, quad })
 
-      this.addVariable(step.target.slice(1), quad[step.pick])
+      this.addVariable(step.target, quad[step.pick])
     }
 
     // when assigning new variables, make hops from the new variables, too
@@ -294,50 +315,45 @@ export class QueryAndStore<V extends VariableType = VariableType> {
 
       // now, remove variables that are no longer provided by any move.
       for (const variable in providedVariables) {
-        providedVariables[variable].forEach(term => {
+        providedVariables[variable]!.forEach(term => {
           // which moves provide this variable
           const providingMoves = Array.from(
             this.moves.providersOf[term.value],
           ).filter(a =>
             Array.from(a.to[variable] ?? []).some(t => t.equals(term)),
           )
+
           if (providingMoves.length === 0) this.removeVariable(variable, term)
         })
       }
     })
   }
 
-  private hopFromVariable(variable: string, node: Term) {
+  private hopFromVariable(variable: V, node: Term) {
     // find steps relevant for this variable
-    const qVariable = `?${variable}`
     const relevantSteps = this.query
       .map((s, i) => [s, i] as const)
       .filter(([step]) => {
-        if (typeof step === 'function') return true
         if (
           step.type === 'match' &&
-          quadElements.some(el => step[el] === qVariable)
+          quadElements.some(el => step[el] === variable)
         )
           return true
-        if (step.type === 'transform variable' && step.source === qVariable)
+        if (step.type === 'transform variable' && step.source === variable)
           return true
         return false
       })
 
     relevantSteps.forEach(([step, i]) => {
-      if (typeof step === 'function') {
-        step(this)
-      } else if (step.type === 'transform variable') {
+      if (step.type === 'transform variable') {
         const transformedNode = step.transform(node)
         if (transformedNode) {
           this.moves.add({
-            from: { [step.source.slice(1)]: new Set([node]) },
-            to: {
-              [step.target.slice(1)]: new Set([transformedNode]),
-            },
+            from: { [step.source]: new Set([node]) } as Variables<V>,
+            to: { [step.target]: new Set([transformedNode]) } as Variables<V>,
             step: i,
           })
-          this.addVariable(step.target.slice(1), transformedNode)
+          this.addVariable(step.target, transformedNode)
         }
       } else if (step.type === 'match') {
         // try to match quad(s) relevant for this step
@@ -345,12 +361,12 @@ export class QueryAndStore<V extends VariableType = VariableType> {
           let outputs = new Set<Term | null>()
           const s = step[element]
           if (!s) outputs.add(null)
-          else if (!s.startsWith('?')) outputs.add(new NamedNode(s))
-          else if (s.slice(1) === variable) outputs.add(node)
+          else if (!isVariable(s)) outputs.add(new NamedNode(s))
+          else if (s === variable) outputs.add(node)
           else {
             const variables = this.store.getSubjects(
               meta.variable,
-              new Variable(s.slice(1)),
+              new VVVVVVVVVVV(s),
               meta.meta,
             )
             outputs = new Set(variables)
@@ -370,13 +386,13 @@ export class QueryAndStore<V extends VariableType = VariableType> {
                 const quads = this.store.getQuads(s, p, o, g)
 
                 for (const quad of quads) {
-                  const targetVar = step.target.slice(1)
+                  const targetVar = step.target
                   const target = quad[step.pick]
-                  const from: Variables = {}
+                  const from: Variables<V> = {}
                   for (const el of quadElements)
-                    if (step[el]?.startsWith('?'))
-                      from[step[el]!.slice(1)] = new Set([quad[el]])
-                  const to = { [targetVar]: new Set([target]) }
+                    if (isVariable(step[el]))
+                      from[step[el]] = new Set([quad[el]])
+                  const to = { [targetVar]: new Set([target]) } as Variables<V>
                   this.moves.add({ from, to, step: i, quad })
                   this.addVariable(targetVar, target)
                 }
@@ -388,18 +404,18 @@ export class QueryAndStore<V extends VariableType = VariableType> {
     })
   }
 
-  private addVariable(variable: string, node: Term) {
+  private addVariable(variable: V, node: Term) {
     // if the variable is already added, there's nothing to do
     if (
       this.store.has(
-        new Quad(node, meta.variable, new Variable(variable), meta.meta),
+        new Quad(node, meta.variable, new VVVVVVVVVVV(variable), meta.meta),
       )
     )
       return
 
     this.store.addQuads([
       // add the new variable
-      new Quad(node, meta.variable, new Variable(variable), meta.meta),
+      new Quad(node, meta.variable, new VVVVVVVVVVV(variable), meta.meta),
     ])
 
     let resourceNode: NamedNode | undefined = undefined
@@ -414,20 +430,18 @@ export class QueryAndStore<V extends VariableType = VariableType> {
     }
 
     // if the variable is used in other queries and hasn't been given status, mark it as missing
-    const qVariable = `?${variable}`
-
     const isInAddResources = this.query.some(
       a =>
         typeof a !== 'function' &&
         a.type === 'add resources' &&
-        a.variable === qVariable,
+        a.variable === variable,
     )
 
     const isInMatch = this.query.some(
       a =>
         typeof a !== 'function' &&
         a.type === 'match' &&
-        quadElements.some(el => a[el] === qVariable),
+        quadElements.some(el => a[el] === variable),
     )
 
     const isNeeded = isInAddResources || isInMatch
@@ -446,10 +460,9 @@ export class QueryAndStore<V extends VariableType = VariableType> {
   /**
    * If you provide variable name, this method will return URIs that belong to that variable
    */
-  getVariable(variableName: string) {
-    if (variableName.startsWith('?')) variableName = variableName.slice(1)
+  getVariable(variableName: V) {
     return this.store
-      .getSubjects(meta.variable, new Variable(variableName), meta.meta)
+      .getSubjects(meta.variable, new VVVVVVVVVVV(variableName), meta.meta)
       .map(s => s.value)
   }
 
@@ -457,8 +470,8 @@ export class QueryAndStore<V extends VariableType = VariableType> {
     return this.store
       .getQuads(null, meta.variable, null, meta.meta)
       .reduce((dict: { [key: string]: Set<string> }, quad) => {
-        dict[Variable.getVar(quad.object)] ??= new Set<string>()
-        dict[Variable.getVar(quad.object)].add(quad.subject.value)
+        dict[VVVVVVVVVVV.getVar<V>(quad.object)] ??= new Set<string>()
+        dict[VVVVVVVVVVV.getVar<V>(quad.object)].add(quad.subject.value)
         return dict
       }, {})
   }
@@ -491,4 +504,11 @@ const quadDiff = (newQuads: Quad[], oldQuads: Quad[]): [Quad[], Quad[]] => {
   const deletions = oldQuads.filter(oq => !newQuads.some(nq => oq.equals(nq)))
 
   return [additions, deletions]
+}
+
+// type guard for testing variables
+function isVariable<V extends Variable = Variable>(
+  value: string | undefined,
+): value is V {
+  return typeof value === 'string' && value.startsWith('?')
 }
