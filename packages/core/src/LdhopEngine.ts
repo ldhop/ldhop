@@ -2,6 +2,12 @@ import { NamedNode, Quad, Store, type Term } from 'n3'
 import type { LdhopQuery, Match, Variable } from './types.js'
 import { removeHashFromURI } from './utils/helpers.js'
 
+type Uri = string
+interface Graph {
+  added: boolean
+  uri: Uri
+  term: NamedNode
+}
 type Variables<V extends Variable> = Partial<{ [key in V]: Set<Term> }>
 type UriVariables<V extends Variable> = Partial<{ [key in V]: Set<string> }>
 
@@ -24,36 +30,36 @@ enum QuadElement {
 
 const quadElements = Object.values(QuadElement)
 
-const metaUris = {
-  meta: 'https://ldhop.example/meta',
-  status: 'https://ldhop.example/status',
-  missing: 'https://ldhop.example/status/missing',
-  added: 'https://ldhop.example/status/added',
-  failed: 'https://ldhop.example/status/failed',
-  resource: 'https://ldhop.example/resource',
-  variable: 'https://ldhop.example/variable',
-}
+// const metaUris = {
+//   meta: 'https://ldhop.example/meta',
+//   status: 'https://ldhop.example/status',
+//   missing: 'https://ldhop.example/status/missing',
+//   added: 'https://ldhop.example/status/added',
+//   failed: 'https://ldhop.example/status/failed',
+//   resource: 'https://ldhop.example/resource',
+//   variable: 'https://ldhop.example/variable',
+// }
 
-class VVVVVVVVVVV<V extends Variable> extends NamedNode {
-  variable: V
+// class VVVVVVVVVVV<V extends Variable> extends NamedNode {
+//   variable: V
 
-  constructor(variable: V) {
-    super(metaUris.variable + '/' + variable)
-    this.variable = variable
-  }
+//   constructor(variable: V) {
+//     super(metaUris.variable + '/' + variable)
+//     this.variable = variable
+//   }
 
-  static getVar<V extends Variable>(term: Term) {
-    return term.value.split('/').pop() as V
-  }
-}
+//   static getVar<V extends Variable>(term: Term) {
+//     return term.value.split('/').pop() as V
+//   }
+// }
 
-type MetaUris = typeof metaUris
-type Meta = { [P in keyof MetaUris]: NamedNode }
-const meta = <Meta>(
-  Object.fromEntries(
-    Object.entries(metaUris).map(([key, uri]) => [key, new NamedNode(uri)]),
-  )
-)
+// type MetaUris = typeof metaUris
+// type Meta = { [P in keyof MetaUris]: NamedNode }
+// const meta = <Meta>(
+//   Object.fromEntries(
+//     Object.entries(metaUris).map(([key, uri]) => [key, new NamedNode(uri)]),
+//   )
+// )
 
 class Moves<V extends Variable> {
   list: Set<Move<V>> = new Set()
@@ -134,10 +140,17 @@ class Moves<V extends Variable> {
   }
 }
 
+type TermType = Term['termType']
+type VarIndex = `${TermType}:${string}`
+
 export class LdhopEngine<V extends Variable = Variable> {
-  store: Store
-  query: LdhopQuery<V>
-  moves = new Moves<V>()
+  public store: Store
+  public query: LdhopQuery<V>
+  public moves = new Moves<V>()
+  // private variables = new Map<V, Set<Term>>()
+  // variables index is indexed by
+  private variables = new Map<V, Map<VarIndex, Term>>()
+  private graphs = new Map<Uri, Graph>()
 
   constructor(
     query: LdhopQuery<V>,
@@ -156,9 +169,9 @@ export class LdhopEngine<V extends Variable = Variable> {
           const term = new NamedNode(value)
 
           this.moves.add({
+            step: -1,
             from: {} as Variables<V>,
             to: { [key]: new Set([term]) } as Variables<V>,
-            step: -1,
           })
           this.addVariable(key, term)
         }
@@ -171,20 +184,13 @@ export class LdhopEngine<V extends Variable = Variable> {
   }
 
   private removeVariable(variable: V, node: Term) {
-    this.store.removeQuad(
-      new Quad(node, meta.variable, new VVVVVVVVVVV(variable), meta.meta),
-    )
+    // TODO TO BE FIXED
+    this.variables.get(variable)?.delete(`${node.termType}:${node.value}`)
+    if (this.variables.get(variable)?.size === 0)
+      this.variables.delete(variable)
 
     if (node.termType === 'NamedNode') {
       const resourceNode = new NamedNode(removeHashFromURI(node.value))
-
-      this.store.removeQuad(
-        new Quad(node, meta.resource, resourceNode, meta.meta),
-      )
-
-      this.store.removeQuads(
-        this.store.getQuads(resourceNode, meta.status, null, meta.meta),
-      )
 
       this.removeResource(resourceNode.value)
     }
@@ -220,6 +226,14 @@ export class LdhopEngine<V extends Variable = Variable> {
     quads: Quad[],
     status: 'success' | 'error' = 'success',
   ) {
+    const graphUri = resource
+
+    const graph: Graph = this.graphs.get(graphUri) ?? {
+      uri: graphUri,
+      term: new NamedNode(graphUri),
+      added: false,
+    }
+
     const resourceNode = new NamedNode(resource)
 
     const oldResource = this.store.getQuads(null, null, null, resourceNode)
@@ -229,14 +243,15 @@ export class LdhopEngine<V extends Variable = Variable> {
     additions.forEach(quad => this.addQuad(quad))
     deletions.forEach(quad => this.removeQuad(quad))
 
-    const missing = new Quad(resourceNode, meta.status, meta.missing, meta.meta)
-    const added = new Quad(resourceNode, meta.status, meta.added, meta.meta)
-    const failed = new Quad(resourceNode, meta.status, meta.failed, meta.meta)
+    // mark the resource as added or failed depending on statusa
+    graph.added = true
+    this.graphs.set(graphUri, graph)
+  }
 
-    // mark the resource as added or failed depending on status
-    this.store.removeQuads([missing, added, failed])
-    if (status === 'success') this.store.addQuad(added)
-    if (status === 'error') this.store.addQuad(failed)
+  private isVariablePresent(variable: V, node: Term) {
+    return Boolean(
+      this.variables.get(variable)?.has(`${node.termType}:${node.value}`),
+    )
   }
 
   addQuad(quad: Quad) {
@@ -244,24 +259,16 @@ export class LdhopEngine<V extends Variable = Variable> {
 
     this.store.addQuad(quad)
 
-    const variables = Object.fromEntries(
-      quadElements.map(el => [
-        el,
-        this.store.getObjects(quad[el], meta.variable, meta.meta),
-      ]),
-    ) as Record<QuadElement, VVVVVVVVVVV<V>[]>
-
     const matchQuadElement = (
+      quad: Quad,
       step: Match<V>,
       element: QuadElement,
     ): boolean => {
       const el = step[element]
       const node = quad[element]
       if (!el) return true
-      if (isVariable<V>(el)) {
-        if (variables[element].some(v => v.equals(new VVVVVVVVVVV(el))))
-          return true
-      }
+      if (isVariable<V>(el) && this.isVariablePresent(el, node)) return true
+
       if (el === node.value) return true
       return false
     }
@@ -274,7 +281,7 @@ export class LdhopEngine<V extends Variable = Variable> {
       )
       .filter(([, step]) =>
         // keep only steps that match given quad.
-        quadElements.every(element => matchQuadElement(step, element)),
+        quadElements.every(element => matchQuadElement(quad, step, element)),
       )
       .map(([i, s]) => [+i, s] as const)
 
@@ -296,6 +303,7 @@ export class LdhopEngine<V extends Variable = Variable> {
   }
 
   removeResource(uri: string) {
+    this.graphs.delete(uri)
     const quads = this.store.getQuads(null, null, null, new NamedNode(uri))
 
     quads.forEach(q => this.removeQuad(q))
@@ -364,11 +372,7 @@ export class LdhopEngine<V extends Variable = Variable> {
           else if (!isVariable(s)) outputs.add(new NamedNode(s))
           else if (s === variable) outputs.add(node)
           else {
-            const variables = this.store.getSubjects(
-              meta.variable,
-              new VVVVVVVVVVV(s),
-              meta.meta,
-            )
+            const variables = this.getVariable(s)?.values()
             outputs = new Set(variables)
           }
 
@@ -406,52 +410,34 @@ export class LdhopEngine<V extends Variable = Variable> {
 
   private addVariable(variable: V, node: Term) {
     // if the variable is already added, there's nothing to do
-    if (
-      this.store.has(
-        new Quad(node, meta.variable, new VVVVVVVVVVV(variable), meta.meta),
-      )
-    )
-      return
+    if (this.isVariablePresent(variable, node)) return
 
-    this.store.addQuads([
-      // add the new variable
-      new Quad(node, meta.variable, new VVVVVVVVVVV(variable), meta.meta),
-    ])
+    if (!this.variables.has(variable)) this.variables.set(variable, new Map())
 
-    let resourceNode: NamedNode | undefined = undefined
-
-    if (node.termType === 'NamedNode') {
-      resourceNode = new NamedNode(removeHashFromURI(node.value))
-
-      this.store.addQuads([
-        // make a resource
-        new Quad(node, meta.resource, resourceNode, meta.meta),
-      ])
-    }
+    this.variables.get(variable)!.set(`${node.termType}:${node.value}`, node)
 
     // if the variable is used in other queries and hasn't been given status, mark it as missing
     const isInAddResources = this.query.some(
-      a =>
-        typeof a !== 'function' &&
-        a.type === 'add resources' &&
-        a.variable === variable,
+      a => a.type === 'add resources' && a.variable === variable,
     )
 
     const isInMatch = this.query.some(
-      a =>
-        typeof a !== 'function' &&
-        a.type === 'match' &&
-        quadElements.some(el => a[el] === variable),
+      a => a.type === 'match' && quadElements.some(el => a[el] === variable),
     )
 
     const isNeeded = isInAddResources || isInMatch
 
-    if (
-      resourceNode &&
-      isNeeded &&
-      this.store.match(resourceNode, meta.status, null, meta.meta).size === 0
-    ) {
-      this.store.addQuad(resourceNode, meta.status, meta.missing, meta.meta)
+    if (isNeeded && node.termType === 'NamedNode') {
+      const graphName = removeHashFromURI(node.value)
+
+      this.graphs.set(
+        graphName,
+        this.graphs.get(graphName) ?? {
+          added: false,
+          uri: graphName,
+          term: node,
+        },
+      )
     }
 
     this.hopFromVariable(variable, node)
@@ -461,36 +447,60 @@ export class LdhopEngine<V extends Variable = Variable> {
    * If you provide variable name, this method will return URIs that belong to that variable
    */
   getVariable(variableName: V) {
-    return this.store
-      .getSubjects(meta.variable, new VVVVVVVVVVV(variableName), meta.meta)
-      .map(s => s.value)
+    return new Set(this.variables.get(variableName)?.values())
+  }
+
+  getVariableAsStringSet(variableName: V) {
+    return termSetToStringSet(this.getVariable(variableName))
   }
 
   getAllVariables() {
-    return this.store
-      .getQuads(null, meta.variable, null, meta.meta)
-      .reduce((dict: { [key: string]: Set<string> }, quad) => {
-        dict[VVVVVVVVVVV.getVar<V>(quad.object)] ??= new Set<string>()
-        dict[VVVVVVVVVVV.getVar<V>(quad.object)].add(quad.subject.value)
-        return dict
-      }, {})
+    return Object.fromEntries(
+      this.variables
+        .entries()
+        .map(([key, value]) => [key, new Set(value.values())]),
+    )
   }
 
-  getResources(status?: 'missing' | 'added' | 'failed') {
-    if (!status)
-      return this.store
-        .getObjects(null, meta.resource, meta.meta)
-        .map(s => s.value)
+  getAllVariablesAsStringSets() {
+    return Object.fromEntries(
+      this.variables
+        .entries()
+        .map(([key, value]) => [
+          key,
+          termSetToStringSet(new Set(value.values())),
+        ]),
+    )
+  }
 
-    const statusNode =
-      status === 'missing'
-        ? meta.missing
-        : status === 'failed'
-          ? meta.failed
-          : meta.added
-    return this.store
-      .getSubjects(meta.status, statusNode, meta.meta)
-      .map(m => m.value)
+  /**
+   * @deprecated use getGraphs instead
+   */
+  public getResources(status?: 'missing' | 'added' | 'failed') {
+    switch (status) {
+      case undefined: {
+        return this.getGraphs()
+      }
+      case 'missing': {
+        return this.getGraphs(false)
+      }
+      case 'added': {
+        throw new Error('ambiguous')
+      }
+      case 'failed': {
+        throw new Error('ambiguous')
+      }
+    }
+  }
+
+  public getGraphs(added?: boolean) {
+    if (typeof added !== 'boolean') return new Set(this.graphs.keys())
+
+    const result = new Set<Uri>()
+    this.graphs.forEach((graph, uri) => {
+      if (graph.added === added) result.add(uri)
+    })
+    return result
   }
 }
 
@@ -512,3 +522,6 @@ function isVariable<V extends Variable = Variable>(
 ): value is V {
   return typeof value === 'string' && value.startsWith('?')
 }
+
+const termSetToStringSet = (set: Set<Term>): Set<string> =>
+  new Set([...set].map(term => term.value))

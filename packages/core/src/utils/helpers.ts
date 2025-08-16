@@ -127,7 +127,7 @@ export const run = async <V extends Variable>(
       qas.addResource(res, quads, response?.ok ? 'success' : 'error')
     } catch (e) {
       // eslint-disable-next-line no-console
-      console.error(e)
+      console.log((e as Error).message, (e as Error).stack?.slice(0, 1000))
       qas.addResource(res, [], 'error')
     } finally {
       missingResources = qas.getMissingResources()

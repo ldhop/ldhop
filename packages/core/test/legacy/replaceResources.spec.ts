@@ -1,20 +1,20 @@
 import { expect } from 'chai'
 import { NamedNode, Quad } from 'n3'
 import { sioc } from 'rdf-namespaces'
-import { LdhopEngine } from '../src/index.js'
+import { QueryAndStore } from '../../src/index.js'
 import {
   chatsWithPerson,
   friendOfAFriendQuery,
   personAccommodationsQuery,
   Var,
-} from './queries.js'
-import { hospex } from './rdf-namespaces.js'
-import { fetchRdf } from './resources/index.js'
-import { run } from './run.js'
+} from '../queries.js'
+import { hospex } from '../rdf-namespaces.js'
+import { fetchRdf } from '../resources/index.js'
+import { run } from '../run.js'
 
-describe(`Replacing resources in ${LdhopEngine.name}`, () => {
+describe(`Replacing resources in ${QueryAndStore.name}`, () => {
   it('[remove link] should correctly update the results', async () => {
-    const qas = new LdhopEngine(personAccommodationsQuery, {
+    const qas = new QueryAndStore(personAccommodationsQuery, {
       [Var.person]: new Set(['https://person.example/profile/card#me']),
       [Var.community]: new Set(['https://community.example/community#us']),
     })
@@ -63,7 +63,7 @@ describe(`Replacing resources in ${LdhopEngine.name}`, () => {
   })
 
   it('[add link] should correctly update the results', async () => {
-    const qas = new LdhopEngine(personAccommodationsQuery, {
+    const qas = new QueryAndStore(personAccommodationsQuery, {
       [Var.person]: new Set(['https://person.example/profile/card#me']),
       [Var.community]: new Set(['https://community.example/community#us']),
     })
@@ -120,7 +120,7 @@ describe(`Replacing resources in ${LdhopEngine.name}`, () => {
   })
 
   it('[remove community] should correctly update the results', async () => {
-    const qas = new LdhopEngine(personAccommodationsQuery, {
+    const qas = new QueryAndStore(personAccommodationsQuery, {
       [Var.person]: new Set(['https://person.example/profile/card#me']),
       [Var.community]: new Set(['https://community.example/community#us']),
     })
@@ -175,7 +175,7 @@ describe(`Replacing resources in ${LdhopEngine.name}`, () => {
   })
 
   it('should work fine with hopping in circles', async () => {
-    const qas = new LdhopEngine(friendOfAFriendQuery, {
+    const qas = new QueryAndStore(friendOfAFriendQuery, {
       [Var.person]: new Set(['https://person.example/profile/card#me']),
     })
 
@@ -201,11 +201,10 @@ describe(`Replacing resources in ${LdhopEngine.name}`, () => {
   })
 
   it('should allow replacing all resources with empty resources', async () => {
-    const qas = new LdhopEngine(chatsWithPerson, {
+    const qas = new QueryAndStore(chatsWithPerson, {
       [Var.person]: new Set(['https://person.example/profile/card#me']),
       [Var.otherPerson]: new Set(['https://person2.example/profile/card#me']),
     })
-    expect(qas.getVariable(Var.person)).to.have.length(1)
     expect(qas.getVariable(Var.person)).to.have.length(1)
 
     await run(qas)
@@ -223,9 +222,9 @@ describe(`Replacing resources in ${LdhopEngine.name}`, () => {
 
     // only initial variable moves stay
     expect(qas.moves.list.size).to.equal(2)
-    expect(qas.getAllVariablesAsStringSets()).to.deep.equal({
-      [Var.person]: new Set(['https://person.example/profile/card#me']),
-      [Var.otherPerson]: new Set(['https://person2.example/profile/card#me']),
+    expect(qas.getAllVariables()).to.deep.equal({
+      person: new Set(['https://person.example/profile/card#me']),
+      otherPerson: new Set(['https://person2.example/profile/card#me']),
     })
   })
 })

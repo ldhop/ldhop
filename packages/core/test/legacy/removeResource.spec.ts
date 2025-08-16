@@ -1,12 +1,12 @@
 import { expect } from 'chai'
-import { LdhopEngine } from '../src/index.js'
-import { inboxMessagesQuery, Var } from './queries.js'
-import { run } from './run.js'
+import { QueryAndStore } from '../../src/index.js'
+import { inboxMessagesQuery, Var } from '../queries.js'
+import { run } from '../run.js'
 
-describe(`Removing resource from ${LdhopEngine.name}`, () => {
+describe(`Removing resource from QueryAndStore`, () => {
   it('[remove link] should correctly update the results', async () => {
     // first run the normal query
-    const qas = new LdhopEngine(inboxMessagesQuery, {
+    const qas = new QueryAndStore(inboxMessagesQuery, {
       [Var.person]: new Set(['https://person.example/profile/card#me']),
     })
 
