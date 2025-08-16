@@ -1,20 +1,20 @@
 import { expect } from 'chai'
 import { foaf } from 'rdf-namespaces'
-import { QueryAndStore } from '../../src/index.js'
-import { friendOfAFriendQuery, Var } from '../queries.js'
+import { QueryAndStore } from '../../src/QueryAndStore.js'
+import { friendOfAFriendQuery } from '../queries.js'
 import { fetchRdf } from '../resources/index.js'
 import { run } from '../run.js'
 
-describe('blank nodes in QueryAndStore', () => {
+describe('Blank nodes in QueryAndStore', () => {
   it('should handle blank nodes correctly', async () => {
     const base = 'https://blank.example/profile/card'
     const qas = new QueryAndStore(friendOfAFriendQuery, {
-      [Var.person]: new Set([base + '#me']),
+      person: new Set([base + '#me']),
     })
 
     await run(qas)
 
-    const persons = qas.getVariable(Var.person)
+    const persons = qas.getVariable('person')
     // console.log(persons)
     expect(persons).to.have.length(6)
 
@@ -26,17 +26,17 @@ describe('blank nodes in QueryAndStore', () => {
 
     qas.addResource(base, testPerson)
     await run(qas)
-    expect(qas.getVariable(Var.person)).to.have.length(6)
+    expect(qas.getVariable('person')).to.have.length(6)
     expect(qas.moves.list.size).to.equal(7)
 
     qas.addResource(base, testPersonWithoutLinks)
     await run(qas)
-    expect(qas.getVariable(Var.person)).to.have.length(1)
+    expect(qas.getVariable('person')).to.have.length(1)
     expect(qas.moves.list.size).to.equal(1)
 
     qas.addResource(base, testPerson)
     await run(qas)
-    expect(qas.getVariable(Var.person)).to.have.length(6)
+    expect(qas.getVariable('person')).to.have.length(6)
     expect(qas.moves.list.size).to.equal(7)
   })
 })

@@ -12,16 +12,16 @@ import { hospex } from './rdf-namespaces.js'
 import { fetchRdf } from './resources/index.js'
 import { run } from './run.js'
 
-describe(`Replacing resources in ${LdhopEngine.name}`, () => {
+describe('Replacing resources in LdhopEngine', () => {
   it('[remove link] should correctly update the results', async () => {
-    const qas = new LdhopEngine(personAccommodationsQuery, {
+    const engine = new LdhopEngine(personAccommodationsQuery, {
       [Var.person]: new Set(['https://person.example/profile/card#me']),
       [Var.community]: new Set(['https://community.example/community#us']),
     })
 
-    await run(qas)
+    await run(engine)
 
-    const offersBefore = qas.getVariable(Var.offer)
+    const offersBefore = engine.getVariable(Var.offer)
     expect(offersBefore).to.have.length(2)
 
     // add the community document without the link to one of the offers
@@ -39,38 +39,26 @@ describe(`Replacing resources in ${LdhopEngine.name}`, () => {
         ),
     )
 
-    qas.addResource(
+    engine.addResource(
       'https://person.example/hospex/community-example/card',
       updated,
     )
 
-    await run(qas)
+    await run(engine)
 
-    const offersAfter = qas.getVariable(Var.offer)
+    const offersAfter = engine.getVariable(Var.offer)
     expect(offersAfter).to.have.length(1)
-
-    // test that only one accommodation remains in the retrieved store
-    // const matches = [
-    //   ...qas.store.match(
-    //     new NamedNode('https://person.example/profile/card#me'),
-    //     new NamedNode(hospex.offers),
-    //     null,
-    //     null,
-    //   ),
-    // ]
-
-    // expect(matches).to.have.length(1)
   })
 
   it('[add link] should correctly update the results', async () => {
-    const qas = new LdhopEngine(personAccommodationsQuery, {
+    const engine = new LdhopEngine(personAccommodationsQuery, {
       [Var.person]: new Set(['https://person.example/profile/card#me']),
       [Var.community]: new Set(['https://community.example/community#us']),
     })
 
-    await run(qas)
+    await run(engine)
 
-    const offersBefore = qas.getVariable(Var.offer)
+    const offersBefore = engine.getVariable(Var.offer)
     expect(offersBefore).to.have.length(2)
 
     // add the community document with additional offer
@@ -88,46 +76,26 @@ describe(`Replacing resources in ${LdhopEngine.name}`, () => {
       ),
     )
 
-    qas.addResource(
+    engine.addResource(
       'https://person.example/hospex/community-example/card',
       quads,
     )
 
-    await run(qas)
+    await run(engine)
 
-    const offersAfter = qas.getVariable(Var.offer)
+    const offersAfter = engine.getVariable(Var.offer)
     expect(offersAfter).to.have.length(3)
-
-    // test that there are 3 accommodations now
-    // const matches = [
-    //   ...qas.store.match(
-    //     new NamedNode('https://person.example/profile/card#me'),
-    //     new NamedNode(hospex.offers),
-    //     null,
-    //     null,
-    //   ),
-    // ]
-
-    // expect(matches).to.have.length(3)
-
-    // expect(
-    //   qas.store.match(
-    //     null,
-    //     new NamedNode(rdf.type),
-    //     new NamedNode(hospex.Accommodation),
-    //   ).size,
-    // ).to.equal(3)
   })
 
   it('[remove community] should correctly update the results', async () => {
-    const qas = new LdhopEngine(personAccommodationsQuery, {
+    const engine = new LdhopEngine(personAccommodationsQuery, {
       [Var.person]: new Set(['https://person.example/profile/card#me']),
       [Var.community]: new Set(['https://community.example/community#us']),
     })
 
-    await run(qas)
+    await run(engine)
 
-    const offersBefore = qas.getVariable(Var.offer)
+    const offersBefore = engine.getVariable(Var.offer)
     expect(offersBefore).to.have.length(2)
 
     // add the community document without the link to one of the offers
@@ -143,87 +111,67 @@ describe(`Replacing resources in ${LdhopEngine.name}`, () => {
         ),
     )
 
-    qas.addResource(
+    engine.addResource(
       'https://person.example/hospex/community-example/card',
       updated,
     )
 
-    await run(qas)
+    await run(engine)
 
-    const offersAfter = qas.getVariable(Var.offer)
+    const offersAfter = engine.getVariable(Var.offer)
     expect(offersAfter).to.have.length(0)
-
-    // test that there are 3 accommodations now
-    // const matches = [
-    //   ...qas.store.match(
-    //     new NamedNode('https://person.example/profile/card#me'),
-    //     new NamedNode(hospex.offers),
-    //     null,
-    //     null,
-    //   ),
-    // ]
-
-    // expect(matches).to.have.length(0)
-
-    // expect(
-    //   qas.store.match(
-    //     null,
-    //     new NamedNode(rdf.type),
-    //     new NamedNode(hospex.Accommodation),
-    //   ).size,
-    // ).to.equal(0)
   })
 
   it('should work fine with hopping in circles', async () => {
-    const qas = new LdhopEngine(friendOfAFriendQuery, {
+    const engine = new LdhopEngine(friendOfAFriendQuery, {
       [Var.person]: new Set(['https://person.example/profile/card#me']),
     })
 
-    await run(qas)
+    await run(engine)
 
-    const personsBefore = qas.getVariable(Var.person)
+    const personsBefore = engine.getVariable(Var.person)
     expect(personsBefore).to.have.length(4)
 
-    qas.addResource('https://person2.example/profile/card', [])
+    engine.addResource('https://person2.example/profile/card', [])
 
-    await run(qas)
+    await run(engine)
 
-    const personsAfter = qas.getVariable(Var.person)
+    const personsAfter = engine.getVariable(Var.person)
     // there will be remaining person and person2
     expect(personsAfter).to.have.length(2)
-    expect(qas.moves.list.size).to.equal(2)
+    expect(engine.moves.list.size).to.equal(2)
 
     // now, let's try to revert it
     const person2 = fetchRdf('https://person2.example/profile/card')
-    qas.addResource('https://person2.example/profile/card', person2)
-    await run(qas)
-    expect(qas.getVariable(Var.person)).to.have.length(4)
+    engine.addResource('https://person2.example/profile/card', person2)
+    await run(engine)
+    expect(engine.getVariable(Var.person)).to.have.length(4)
   })
 
   it('should allow replacing all resources with empty resources', async () => {
-    const qas = new LdhopEngine(chatsWithPerson, {
+    const engine = new LdhopEngine(chatsWithPerson, {
       [Var.person]: new Set(['https://person.example/profile/card#me']),
       [Var.otherPerson]: new Set(['https://person2.example/profile/card#me']),
     })
-    expect(qas.getVariable(Var.person)).to.have.length(1)
-    expect(qas.getVariable(Var.person)).to.have.length(1)
+    expect(engine.getVariable(Var.person)).to.have.length(1)
+    expect(engine.getVariable(Var.person)).to.have.length(1)
 
-    await run(qas)
+    await run(engine)
 
-    const messages = qas.getVariable(Var.message)
+    const messages = engine.getVariable(Var.message)
 
     expect(messages).to.have.length(23)
 
-    const resources = qas.store
+    const resources = engine.store
       .getGraphs(null, null, null)
       .map(g => g.value)
       .filter(r => !r.includes('ldhop.example'))
 
-    resources.forEach(resource => qas.addResource(resource, []))
+    resources.forEach(resource => engine.addResource(resource, []))
 
     // only initial variable moves stay
-    expect(qas.moves.list.size).to.equal(2)
-    expect(qas.getAllVariablesAsStringSets()).to.deep.equal({
+    expect(engine.moves.list.size).to.equal(2)
+    expect(engine.getAllVariablesAsStringSets()).to.deep.equal({
       [Var.person]: new Set(['https://person.example/profile/card#me']),
       [Var.otherPerson]: new Set(['https://person2.example/profile/card#me']),
     })

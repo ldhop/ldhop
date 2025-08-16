@@ -6,7 +6,7 @@ import { friendOfAFriendQuery } from '../queries.js'
 import { fetchRdf } from '../resources/index.js'
 import { run } from '../run.js'
 
-describe.skip('Handling orphaned cycles', () => {
+describe.skip('Handling orphaned cycles in QueryAndStore', () => {
   it('should clear disconnected cycles', async () => {
     const resource = 'https://personx.example/profile/card'
     const personx = resource + '#me'

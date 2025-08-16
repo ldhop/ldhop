@@ -12,7 +12,7 @@ import {
 import { fetchRdf } from './resources/index.js'
 import { run } from './run.js'
 
-describe(`Adding resources to ${LdhopEngine.name}`, () => {
+describe('Adding resources to LdhopEngine', () => {
   it('should accept array of commands, and initial variables', () => {
     const engine = new LdhopEngine(communityAccommodationsQuery, {
       [Var.community]: new Set(['https://community.example/community#us']),
@@ -63,11 +63,11 @@ describe(`Adding resources to ${LdhopEngine.name}`, () => {
   })
 
   it('should not miss unused variables', () => {
-    const qas = new LdhopEngine(communityQuery, {
+    const engine = new LdhopEngine(communityQuery, {
       [Var.community]: new Set(['https://community.example/community#us']),
     })
 
-    const resources = qas.getMissingResources()
+    const resources = engine.getMissingResources()
     expect(resources.size).to.equal(1)
     expect(resources.has('https://community.example/community')).to.be.true
 
@@ -75,21 +75,21 @@ describe(`Adding resources to ${LdhopEngine.name}`, () => {
 
     const data = fetchRdf(communityResource)
 
-    qas.addResource(communityResource, data)
+    engine.addResource(communityResource, data)
 
-    const resourcesAfter = qas.getMissingResources()
+    const resourcesAfter = engine.getMissingResources()
     expect(resourcesAfter.size).to.equal(1)
     expect(resourcesAfter.has('https://community.example/group')).to.be.true
 
     const groupData = fetchRdf([...resourcesAfter][0])
-    qas.addResource([...resourcesAfter][0], groupData)
+    engine.addResource([...resourcesAfter][0], groupData)
 
-    const missingAfter = qas.getMissingResources()
+    const missingAfter = engine.getMissingResources()
     expect(missingAfter).to.have.length(0)
   })
 
   it('should miss used variables', () => {
-    const qas = new LdhopEngine(
+    const engine = new LdhopEngine(
       communityQuery.concat({
         type: 'add resources',
         variable: Var.person,
@@ -99,7 +99,7 @@ describe(`Adding resources to ${LdhopEngine.name}`, () => {
       },
     )
 
-    const resources = qas.getMissingResources()
+    const resources = engine.getMissingResources()
     expect(resources.size).to.equal(1)
     expect(resources.has('https://community.example/community')).to.be.true
 
@@ -107,33 +107,36 @@ describe(`Adding resources to ${LdhopEngine.name}`, () => {
 
     const data = fetchRdf(communityResource)
 
-    qas.addResource(communityResource, data)
+    engine.addResource(communityResource, data)
 
-    const resourcesAfter = qas.getMissingResources()
+    const resourcesAfter = engine.getMissingResources()
     expect(resourcesAfter.size).to.equal(1)
     expect(resourcesAfter.has('https://community.example/group')).to.be.true
 
     const groupData = fetchRdf([...resourcesAfter][0])
-    qas.addResource([...resourcesAfter][0], groupData)
+    engine.addResource([...resourcesAfter][0], groupData)
 
-    const missingAfter = qas.getMissingResources()
+    const missingAfter = engine.getMissingResources()
     expect(missingAfter.size).to.equal(3)
   })
 
   it('should not save duplicate moves', async () => {
-    const qas = new LdhopEngine(personAccommodationsQuery, {
+    const engine = new LdhopEngine(personAccommodationsQuery, {
       [Var.community]: new Set(['https://community.example/community#us']),
       [Var.person]: new Set(['https://person.example/profile/card#me']),
     })
 
-    await run(qas)
+    await run(engine)
 
-    expect(qas.moves.list).to.have.length(10)
+    expect(engine.moves.list).to.have.length(10)
 
     const next = fetchRdf('https://person.example/settings/publicTypeIndex.ttl')
 
-    qas.addResource('https://person.example/settings/publicTypeIndex.ttl', next)
-    expect(qas.moves.list).to.have.length(10)
+    engine.addResource(
+      'https://person.example/settings/publicTypeIndex.ttl',
+      next,
+    )
+    expect(engine.moves.list).to.have.length(10)
   })
 
   it('should handle gracefully when we encounter something unexpected instead of uri', async () => {
@@ -147,15 +150,15 @@ describe(`Adding resources to ${LdhopEngine.name}`, () => {
   })
 
   it('should add errored resources and result in nothing missing', () => {
-    const qas = new LdhopEngine(friendOfAFriendQuery, {
+    const engine = new LdhopEngine(friendOfAFriendQuery, {
       [Var.person]: new Set(['https://id.person.example/profile#me']),
     })
 
-    expect(qas.getGraphs().size).to.equal(1)
-    expect(qas.getGraphs(false).size).to.equal(1)
-    expect(qas.getGraphs(true).size).to.equal(0)
+    expect(engine.getGraphs().size).to.equal(1)
+    expect(engine.getGraphs(false).size).to.equal(1)
+    expect(engine.getGraphs(true).size).to.equal(0)
 
-    qas.addResource(
+    engine.addResource(
       'https://id.person.example/profile',
       parseRdfToQuads(
         `<#me> <${foaf.knows}> <https://id2.person.example/profile#me>.`,
@@ -163,14 +166,14 @@ describe(`Adding resources to ${LdhopEngine.name}`, () => {
       ),
     )
 
-    expect(qas.getGraphs().size).to.equal(2)
-    expect(qas.getGraphs(false).size).to.equal(1)
-    expect(qas.getGraphs(true).size).to.equal(1)
+    expect(engine.getGraphs().size).to.equal(2)
+    expect(engine.getGraphs(false).size).to.equal(1)
+    expect(engine.getGraphs(true).size).to.equal(1)
 
-    qas.addResource('https://id2.person.example/profile', [], 'error')
+    engine.addResource('https://id2.person.example/profile', [], 'error')
 
-    expect(qas.getGraphs()).to.have.length(2)
-    expect(qas.getGraphs(false)).to.have.length(0)
-    expect(qas.getGraphs(true)).to.have.length(2)
+    expect(engine.getGraphs()).to.have.length(2)
+    expect(engine.getGraphs(false)).to.have.length(0)
+    expect(engine.getGraphs(true)).to.have.length(2)
   })
 })

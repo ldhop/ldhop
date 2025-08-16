@@ -114,6 +114,9 @@ class Moves {
   }
 }
 
+/**
+ * @deprecated use LdhopEngine instead
+ */
 export class QueryAndStore<V extends VariableType = VariableType> {
   store: Store
   query: RdfQuery<V>

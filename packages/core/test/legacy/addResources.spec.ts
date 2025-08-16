@@ -1,6 +1,7 @@
 import { expect } from 'chai'
 import { foaf } from 'rdf-namespaces'
 import { QueryAndStore } from '../../src/QueryAndStore.js'
+import { RdfQuery } from '../../src/types.js'
 import { parseRdfToQuads } from '../../src/utils/helpers.js'
 import {
   communityAccommodationsQuery,
@@ -8,24 +9,23 @@ import {
   friendOfAFriendQuery,
   personAccommodationsQuery,
   personAccommodationsQuery2,
-  Var,
 } from '../queries.js'
 import { fetchRdf } from '../resources/index.js'
 import { run } from '../run.js'
 
 describe('Adding resources to QueryAndStore', () => {
   it('should accept array of commands, and initial variables', () => {
-    const engine = new QueryAndStore(communityAccommodationsQuery, {
-      [Var.community]: new Set(['https://community.example/community#us']),
+    const qas = new QueryAndStore(communityAccommodationsQuery, {
+      community: new Set(['https://community.example/community#us']),
     })
 
-    expect(engine).to.exist
-    expect(engine.store.size).to.equal(3)
+    expect(qas).to.exist
+    expect(qas.store.size).to.equal(3)
   })
 
   it('should accept a resource and make step through it', () => {
     const qas = new QueryAndStore(communityAccommodationsQuery, {
-      [Var.community]: new Set(['https://community.example/community#us']),
+      community: new Set(['https://community.example/community#us']),
     })
 
     const resources = qas.getMissingResources()
@@ -47,34 +47,33 @@ describe('Adding resources to QueryAndStore', () => {
 
   it("should make steps through person's profile and find all accommodation offers of the community", async () => {
     const qas = new QueryAndStore(personAccommodationsQuery, {
-      [Var.person]: new Set(['https://person.example/profile/card#me']),
-      [Var.community]: new Set(['https://community.example/community#us']),
+      person: new Set(['https://person.example/profile/card#me']),
+      community: new Set(['https://community.example/community#us']),
     })
 
     await run(qas)
 
-    const offers = qas.getVariable(Var.offer)
+    const offers = qas.getVariable('offer')
 
     expect(offers).to.have.length(2)
   })
 
-  if (QueryAndStore === QueryAndStore)
-    it("should make steps through person's profile and find all accommodation offers of the community (2)", async () => {
-      const qas = new QueryAndStore(personAccommodationsQuery2, {
-        person: new Set(['https://person.example/profile/card#me']),
-        community: new Set(['https://community.example/community#us']),
-      })
-
-      await run(qas)
-
-      const offers = qas.getVariable(Var.offer)
-
-      expect(offers).to.have.length(2)
+  it("should make steps through person's profile and find all accommodation offers of the community (2)", async () => {
+    const qas = new QueryAndStore(personAccommodationsQuery2, {
+      person: new Set(['https://person.example/profile/card#me']),
+      community: new Set(['https://community.example/community#us']),
     })
+
+    await run(qas)
+
+    const offers = qas.getVariable('offer')
+
+    expect(offers).to.have.length(2)
+  })
 
   it('should not miss unused variables', () => {
     const qas = new QueryAndStore(communityQuery, {
-      [Var.community]: new Set(['https://community.example/community#us']),
+      community: new Set(['https://community.example/community#us']),
     })
 
     const resources = qas.getMissingResources()
@@ -102,12 +101,12 @@ describe('Adding resources to QueryAndStore', () => {
 
   it('should miss used variables', () => {
     const qas = new QueryAndStore(
-      communityQuery.concat({
+      (communityQuery as RdfQuery).concat({
         type: 'add resources',
-        variable: Var.person,
+        variable: '?person',
       }),
       {
-        [Var.community]: new Set(['https://community.example/community#us']),
+        community: new Set(['https://community.example/community#us']),
       },
     )
 
@@ -152,7 +151,7 @@ describe('Adding resources to QueryAndStore', () => {
 
   it('should handle gracefully when we encounter something unexpected instead of uri', async () => {
     const qas = new QueryAndStore(friendOfAFriendQuery, {
-      [Var.person]: new Set(['https://personx.example/profile/card#me']),
+      person: new Set(['https://personx.example/profile/card#me']),
     })
 
     await run(qas)
@@ -160,7 +159,7 @@ describe('Adding resources to QueryAndStore', () => {
 
   it('should add errored resources and result in nothing missing', () => {
     const qas = new QueryAndStore(friendOfAFriendQuery, {
-      [Var.person]: new Set(['https://id.person.example/profile#me']),
+      person: new Set(['https://id.person.example/profile#me']),
     })
 
     expect(qas.getResources()).to.have.length(1)

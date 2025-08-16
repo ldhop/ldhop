@@ -5,7 +5,7 @@ import { friendOfAFriendQuery, Var } from './queries.js'
 import { fetchRdf } from './resources/index.js'
 import { run } from './run.js'
 
-describe(`blank nodes in ${LdhopEngine.name}`, () => {
+describe('Blank nodes in LdhopEngine', () => {
   it('should handle blank nodes correctly', async () => {
     const base = 'https://blank.example/profile/card'
     const engine = new LdhopEngine(friendOfAFriendQuery, {
@@ -23,14 +23,9 @@ describe(`blank nodes in ${LdhopEngine.name}`, () => {
       ({ predicate }) => predicate.value !== foaf.knows,
     )
 
-    console.log(engine.getVariable(Var.person), '---')
     engine.addResource(base, testPerson)
-    console.log(engine.getVariable(Var.person), '---')
     await run(engine)
-    console.log(engine.getVariable(Var.person), '---')
-    // console.log(engine.moves.list, '****')
     expect(engine.getVariable(Var.person)).to.have.length(6)
-    // console.log(engine.moves.list, '****')
     expect(engine.moves.list.size).to.equal(7)
 
     engine.addResource(base, testPersonWithoutLinks)
@@ -40,7 +35,6 @@ describe(`blank nodes in ${LdhopEngine.name}`, () => {
 
     engine.addResource(base, testPerson)
     await run(engine)
-    console.log(engine.getVariable(Var.person))
     expect(engine.getVariable(Var.person)).to.have.length(6)
     expect(engine.moves.list.size).to.equal(7)
   })

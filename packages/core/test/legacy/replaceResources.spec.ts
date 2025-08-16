@@ -1,27 +1,26 @@
 import { expect } from 'chai'
 import { NamedNode, Quad } from 'n3'
-import { sioc } from 'rdf-namespaces'
-import { QueryAndStore } from '../../src/index.js'
+import { rdf, sioc } from 'rdf-namespaces'
+import { QueryAndStore } from '../../src/QueryAndStore.js'
 import {
   chatsWithPerson,
   friendOfAFriendQuery,
-  personAccommodationsQuery,
-  Var,
+  personAccommodationsQuery2,
 } from '../queries.js'
 import { hospex } from '../rdf-namespaces.js'
 import { fetchRdf } from '../resources/index.js'
 import { run } from '../run.js'
 
-describe(`Replacing resources in ${QueryAndStore.name}`, () => {
+describe('Replacing resources in QueryAndStore', () => {
   it('[remove link] should correctly update the results', async () => {
-    const qas = new QueryAndStore(personAccommodationsQuery, {
-      [Var.person]: new Set(['https://person.example/profile/card#me']),
-      [Var.community]: new Set(['https://community.example/community#us']),
+    const qas = new QueryAndStore(personAccommodationsQuery2, {
+      person: new Set(['https://person.example/profile/card#me']),
+      community: new Set(['https://community.example/community#us']),
     })
 
     await run(qas)
 
-    const offersBefore = qas.getVariable(Var.offer)
+    const offersBefore = qas.getVariable('offer')
     expect(offersBefore).to.have.length(2)
 
     // add the community document without the link to one of the offers
@@ -46,31 +45,31 @@ describe(`Replacing resources in ${QueryAndStore.name}`, () => {
 
     await run(qas)
 
-    const offersAfter = qas.getVariable(Var.offer)
+    const offersAfter = qas.getVariable('offer')
     expect(offersAfter).to.have.length(1)
 
     // test that only one accommodation remains in the retrieved store
-    // const matches = [
-    //   ...qas.store.match(
-    //     new NamedNode('https://person.example/profile/card#me'),
-    //     new NamedNode(hospex.offers),
-    //     null,
-    //     null,
-    //   ),
-    // ]
+    const matches = [
+      ...qas.store.match(
+        new NamedNode('https://person.example/profile/card#me'),
+        new NamedNode(hospex.offers),
+        null,
+        null,
+      ),
+    ]
 
-    // expect(matches).to.have.length(1)
+    expect(matches).to.have.length(1)
   })
 
   it('[add link] should correctly update the results', async () => {
-    const qas = new QueryAndStore(personAccommodationsQuery, {
-      [Var.person]: new Set(['https://person.example/profile/card#me']),
-      [Var.community]: new Set(['https://community.example/community#us']),
+    const qas = new QueryAndStore(personAccommodationsQuery2, {
+      person: new Set(['https://person.example/profile/card#me']),
+      community: new Set(['https://community.example/community#us']),
     })
 
     await run(qas)
 
-    const offersBefore = qas.getVariable(Var.offer)
+    const offersBefore = qas.getVariable('offer')
     expect(offersBefore).to.have.length(2)
 
     // add the community document with additional offer
@@ -95,39 +94,39 @@ describe(`Replacing resources in ${QueryAndStore.name}`, () => {
 
     await run(qas)
 
-    const offersAfter = qas.getVariable(Var.offer)
+    const offersAfter = qas.getVariable('offer')
     expect(offersAfter).to.have.length(3)
 
     // test that there are 3 accommodations now
-    // const matches = [
-    //   ...qas.store.match(
-    //     new NamedNode('https://person.example/profile/card#me'),
-    //     new NamedNode(hospex.offers),
-    //     null,
-    //     null,
-    //   ),
-    // ]
+    const matches = [
+      ...qas.store.match(
+        new NamedNode('https://person.example/profile/card#me'),
+        new NamedNode(hospex.offers),
+        null,
+        null,
+      ),
+    ]
 
-    // expect(matches).to.have.length(3)
+    expect(matches).to.have.length(3)
 
-    // expect(
-    //   qas.store.match(
-    //     null,
-    //     new NamedNode(rdf.type),
-    //     new NamedNode(hospex.Accommodation),
-    //   ).size,
-    // ).to.equal(3)
+    expect(
+      qas.store.match(
+        null,
+        new NamedNode(rdf.type),
+        new NamedNode(hospex.Accommodation),
+      ).size,
+    ).to.equal(3)
   })
 
   it('[remove community] should correctly update the results', async () => {
-    const qas = new QueryAndStore(personAccommodationsQuery, {
-      [Var.person]: new Set(['https://person.example/profile/card#me']),
-      [Var.community]: new Set(['https://community.example/community#us']),
+    const qas = new QueryAndStore(personAccommodationsQuery2, {
+      person: new Set(['https://person.example/profile/card#me']),
+      community: new Set(['https://community.example/community#us']),
     })
 
     await run(qas)
 
-    const offersBefore = qas.getVariable(Var.offer)
+    const offersBefore = qas.getVariable('offer')
     expect(offersBefore).to.have.length(2)
 
     // add the community document without the link to one of the offers
@@ -150,45 +149,45 @@ describe(`Replacing resources in ${QueryAndStore.name}`, () => {
 
     await run(qas)
 
-    const offersAfter = qas.getVariable(Var.offer)
+    const offersAfter = qas.getVariable('offer')
     expect(offersAfter).to.have.length(0)
 
     // test that there are 3 accommodations now
-    // const matches = [
-    //   ...qas.store.match(
-    //     new NamedNode('https://person.example/profile/card#me'),
-    //     new NamedNode(hospex.offers),
-    //     null,
-    //     null,
-    //   ),
-    // ]
+    const matches = [
+      ...qas.store.match(
+        new NamedNode('https://person.example/profile/card#me'),
+        new NamedNode(hospex.offers),
+        null,
+        null,
+      ),
+    ]
 
-    // expect(matches).to.have.length(0)
+    expect(matches).to.have.length(0)
 
-    // expect(
-    //   qas.store.match(
-    //     null,
-    //     new NamedNode(rdf.type),
-    //     new NamedNode(hospex.Accommodation),
-    //   ).size,
-    // ).to.equal(0)
+    expect(
+      qas.store.match(
+        null,
+        new NamedNode(rdf.type),
+        new NamedNode(hospex.Accommodation),
+      ).size,
+    ).to.equal(0)
   })
 
   it('should work fine with hopping in circles', async () => {
     const qas = new QueryAndStore(friendOfAFriendQuery, {
-      [Var.person]: new Set(['https://person.example/profile/card#me']),
+      person: new Set(['https://person.example/profile/card#me']),
     })
 
     await run(qas)
 
-    const personsBefore = qas.getVariable(Var.person)
+    const personsBefore = qas.getVariable('person')
     expect(personsBefore).to.have.length(4)
 
     qas.addResource('https://person2.example/profile/card', [])
 
     await run(qas)
 
-    const personsAfter = qas.getVariable(Var.person)
+    const personsAfter = qas.getVariable('person')
     // there will be remaining person and person2
     expect(personsAfter).to.have.length(2)
     expect(qas.moves.list.size).to.equal(2)
@@ -197,19 +196,19 @@ describe(`Replacing resources in ${QueryAndStore.name}`, () => {
     const person2 = fetchRdf('https://person2.example/profile/card')
     qas.addResource('https://person2.example/profile/card', person2)
     await run(qas)
-    expect(qas.getVariable(Var.person)).to.have.length(4)
+    expect(qas.getVariable('person')).to.have.length(4)
   })
 
   it('should allow replacing all resources with empty resources', async () => {
     const qas = new QueryAndStore(chatsWithPerson, {
-      [Var.person]: new Set(['https://person.example/profile/card#me']),
-      [Var.otherPerson]: new Set(['https://person2.example/profile/card#me']),
+      person: new Set(['https://person.example/profile/card#me']),
+      otherPerson: new Set(['https://person2.example/profile/card#me']),
     })
-    expect(qas.getVariable(Var.person)).to.have.length(1)
+    expect(qas.getVariable('person')).to.have.length(1)
 
     await run(qas)
 
-    const messages = qas.getVariable(Var.message)
+    const messages = qas.getVariable('message')
 
     expect(messages).to.have.length(23)
 
