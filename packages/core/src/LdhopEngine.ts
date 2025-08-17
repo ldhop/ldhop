@@ -353,21 +353,7 @@ export class LdhopEngine<V extends Variable = Variable> {
         Array.from(move.from[variable] ?? []).some(term => term.equals(node)),
     )
 
-    for (const move of movesFromVariable) {
-      const nextVariables = move.to
-      this.moves.remove(move)
-      for (const variable in nextVariables) {
-        nextVariables[variable]!.forEach(nextTerm => {
-          // see if there's any provision of this variable left
-          const a = Array.from(
-            this.moves.providersOf[nextTerm.value] ?? new Set(),
-          ).filter(a =>
-            Array.from(a.to[variable] ?? []).some(t => t.equals(nextTerm)),
-          )
-          if (a.length === 0) this.removeVariable(variable, nextTerm)
-        })
-      }
-    }
+    for (const move of movesFromVariable) this.removeMove(move)
   }
 
   removeGraph(uri: string) {
