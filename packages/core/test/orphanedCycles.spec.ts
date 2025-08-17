@@ -30,7 +30,7 @@ describe.skip('Handling orphaned cycles in LdhopEngine', () => {
         new NamedNode(resource),
       ),
     )
-    engine.addResource(resource, [...personWithoutConnection] as Quad[])
+    engine.addGraph(resource, [...personWithoutConnection] as Quad[])
     const personsAfter = engine.getVariable(Var.person)
     expect(engine.moves.list.size).to.be.lessThan(moveSizeBefore)
     expect(personsAfter).to.have.length(3)

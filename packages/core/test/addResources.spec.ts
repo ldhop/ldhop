@@ -43,7 +43,7 @@ describe('Adding resources to LdhopEngine', () => {
 
     const data = fetchRdf(communityResource)
 
-    engine.addResource(communityResource, data)
+    engine.addGraph(communityResource, data)
 
     const resourcesAfter = engine.getMissingResources()
     expect(resourcesAfter.size).to.equal(1)
@@ -75,14 +75,14 @@ describe('Adding resources to LdhopEngine', () => {
 
     const data = fetchRdf(communityResource)
 
-    engine.addResource(communityResource, data)
+    engine.addGraph(communityResource, data)
 
     const resourcesAfter = engine.getMissingResources()
     expect(resourcesAfter.size).to.equal(1)
     expect(resourcesAfter.has('https://community.example/group')).to.be.true
 
     const groupData = fetchRdf([...resourcesAfter][0])
-    engine.addResource([...resourcesAfter][0], groupData)
+    engine.addGraph([...resourcesAfter][0], groupData)
 
     const missingAfter = engine.getMissingResources()
     expect(missingAfter).to.have.length(0)
@@ -107,14 +107,14 @@ describe('Adding resources to LdhopEngine', () => {
 
     const data = fetchRdf(communityResource)
 
-    engine.addResource(communityResource, data)
+    engine.addGraph(communityResource, data)
 
     const resourcesAfter = engine.getMissingResources()
     expect(resourcesAfter.size).to.equal(1)
     expect(resourcesAfter.has('https://community.example/group')).to.be.true
 
     const groupData = fetchRdf([...resourcesAfter][0])
-    engine.addResource([...resourcesAfter][0], groupData)
+    engine.addGraph([...resourcesAfter][0], groupData)
 
     const missingAfter = engine.getMissingResources()
     expect(missingAfter.size).to.equal(3)
@@ -132,10 +132,7 @@ describe('Adding resources to LdhopEngine', () => {
 
     const next = fetchRdf('https://person.example/settings/publicTypeIndex.ttl')
 
-    engine.addResource(
-      'https://person.example/settings/publicTypeIndex.ttl',
-      next,
-    )
+    engine.addGraph('https://person.example/settings/publicTypeIndex.ttl', next)
     expect(engine.moves.list).to.have.length(10)
   })
 
@@ -158,7 +155,7 @@ describe('Adding resources to LdhopEngine', () => {
     expect(engine.getGraphs(false).size).to.equal(1)
     expect(engine.getGraphs(true).size).to.equal(0)
 
-    engine.addResource(
+    engine.addGraph(
       'https://id.person.example/profile',
       parseRdfToQuads(
         `<#me> <${foaf.knows}> <https://id2.person.example/profile#me>.`,
@@ -170,7 +167,7 @@ describe('Adding resources to LdhopEngine', () => {
     expect(engine.getGraphs(false).size).to.equal(1)
     expect(engine.getGraphs(true).size).to.equal(1)
 
-    engine.addResource('https://id2.person.example/profile', [], 'error')
+    engine.addGraph('https://id2.person.example/profile', [])
 
     expect(engine.getGraphs()).to.have.length(2)
     expect(engine.getGraphs(false)).to.have.length(0)

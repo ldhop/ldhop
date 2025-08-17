@@ -23,17 +23,17 @@ describe('Blank nodes in LdhopEngine', () => {
       ({ predicate }) => predicate.value !== foaf.knows,
     )
 
-    engine.addResource(base, testPerson)
+    engine.addGraph(base, testPerson)
     await run(engine)
     expect(engine.getVariable(Var.person)).to.have.length(6)
     expect(engine.moves.list.size).to.equal(7)
 
-    engine.addResource(base, testPersonWithoutLinks)
+    engine.addGraph(base, testPersonWithoutLinks)
     await run(engine)
     expect(engine.getVariable(Var.person)).to.have.length(1)
     expect(engine.moves.list.size).to.equal(1)
 
-    engine.addResource(base, testPerson)
+    engine.addGraph(base, testPerson)
     await run(engine)
     expect(engine.getVariable(Var.person)).to.have.length(6)
     expect(engine.moves.list.size).to.equal(7)

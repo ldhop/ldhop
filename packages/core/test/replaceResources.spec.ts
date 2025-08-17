@@ -39,7 +39,7 @@ describe('Replacing resources in LdhopEngine', () => {
         ),
     )
 
-    engine.addResource(
+    engine.addGraph(
       'https://person.example/hospex/community-example/card',
       updated,
     )
@@ -76,7 +76,7 @@ describe('Replacing resources in LdhopEngine', () => {
       ),
     )
 
-    engine.addResource(
+    engine.addGraph(
       'https://person.example/hospex/community-example/card',
       quads,
     )
@@ -111,7 +111,7 @@ describe('Replacing resources in LdhopEngine', () => {
         ),
     )
 
-    engine.addResource(
+    engine.addGraph(
       'https://person.example/hospex/community-example/card',
       updated,
     )
@@ -132,7 +132,7 @@ describe('Replacing resources in LdhopEngine', () => {
     const personsBefore = engine.getVariable(Var.person)
     expect(personsBefore).to.have.length(4)
 
-    engine.addResource('https://person2.example/profile/card', [])
+    engine.addGraph('https://person2.example/profile/card', [])
 
     await run(engine)
 
@@ -143,7 +143,7 @@ describe('Replacing resources in LdhopEngine', () => {
 
     // now, let's try to revert it
     const person2 = fetchRdf('https://person2.example/profile/card')
-    engine.addResource('https://person2.example/profile/card', person2)
+    engine.addGraph('https://person2.example/profile/card', person2)
     await run(engine)
     expect(engine.getVariable(Var.person)).to.have.length(4)
   })
@@ -167,7 +167,7 @@ describe('Replacing resources in LdhopEngine', () => {
       .map(g => g.value)
       .filter(r => !r.includes('ldhop.example'))
 
-    resources.forEach(resource => engine.addResource(resource, []))
+    resources.forEach(resource => engine.addGraph(resource, []))
 
     // only initial variable moves stay
     expect(engine.moves.list.size).to.equal(2)

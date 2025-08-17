@@ -3,7 +3,7 @@ import type { ParserOptions } from 'n3'
 import { DataFactory, Parser, Quad } from 'n3'
 import type { PromiseType, Required } from 'utility-types'
 import type { QueryAndStore } from '../index.js'
-import type { LdhopEngine } from '../LdhopEngine.js'
+import { LdhopEngine } from '../LdhopEngine.js'
 import type { Variable } from '../types.js'
 
 type URI = string
@@ -111,10 +111,10 @@ export const parseRdfToQuads = (
  * Follow your nose through the linked data graph by query
  */
 export const run = async <V extends Variable>(
-  qas: LdhopEngine<V> | QueryAndStore<V>,
+  engine: LdhopEngine<V> | QueryAndStore<V>,
   fetch: Fetch,
 ) => {
-  let missingResources = qas.getMissingResources()
+  let missingResources = engine.getMissingResources()
 
   while ([...missingResources].length > 0) {
     const missing = Array.from(missingResources)
@@ -124,13 +124,15 @@ export const run = async <V extends Variable>(
         missing[0],
         fetch,
       )
-      qas.addResource(res, quads, response?.ok ? 'success' : 'error')
+      if (engine instanceof LdhopEngine) engine.addGraph(res, quads)
+      else engine.addResource(res, quads, response?.ok ? 'success' : 'error')
     } catch (e) {
       // eslint-disable-next-line no-console
       console.log((e as Error).message, (e as Error).stack?.slice(0, 1000))
-      qas.addResource(res, [], 'error')
+      if (engine instanceof LdhopEngine) engine.addGraph(res, [])
+      else engine.addResource(res, [], 'error')
     } finally {
-      missingResources = qas.getMissingResources()
+      missingResources = engine.getMissingResources()
     }
   }
 }

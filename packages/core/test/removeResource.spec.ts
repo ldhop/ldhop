@@ -16,7 +16,7 @@ describe('Removing resource from LdhopEngine', () => {
     expect(notificationsBefore).to.have.length(2)
 
     // then delete the notification - replace resource with empty
-    engine.addResource('https://person.example/inbox/notification1', [])
+    engine.addGraph('https://person.example/inbox/notification1', [])
 
     await run(engine)
 

@@ -2,14 +2,18 @@ import { NamedNode, Quad, Store, type Term } from 'n3'
 import type { LdhopQuery, Match, Variable } from './types.js'
 import { removeHashFromURI } from './utils/helpers.js'
 
+type TermId = `${Term['termType']}:${Term['id']}`
+
 type Uri = string
-interface Graph {
+interface Graph<V extends Variable> {
   added: boolean
   uri: Uri
   term: NamedNode
+  sourceVariables: VariableMap<V>
 }
 type Variables<V extends Variable> = Partial<{ [key in V]: Set<Term> }>
 type UriVariables<V extends Variable> = Partial<{ [key in V]: Set<string> }>
+type VariableMap<V extends Variable> = Map<V, Map<TermId, Term>>
 
 interface Move<V extends Variable> {
   from: Variables<V>
@@ -29,37 +33,6 @@ enum QuadElement {
 }
 
 const quadElements = Object.values(QuadElement)
-
-// const metaUris = {
-//   meta: 'https://ldhop.example/meta',
-//   status: 'https://ldhop.example/status',
-//   missing: 'https://ldhop.example/status/missing',
-//   added: 'https://ldhop.example/status/added',
-//   failed: 'https://ldhop.example/status/failed',
-//   resource: 'https://ldhop.example/resource',
-//   variable: 'https://ldhop.example/variable',
-// }
-
-// class VVVVVVVVVVV<V extends Variable> extends NamedNode {
-//   variable: V
-
-//   constructor(variable: V) {
-//     super(metaUris.variable + '/' + variable)
-//     this.variable = variable
-//   }
-
-//   static getVar<V extends Variable>(term: Term) {
-//     return term.value.split('/').pop() as V
-//   }
-// }
-
-// type MetaUris = typeof metaUris
-// type Meta = { [P in keyof MetaUris]: NamedNode }
-// const meta = <Meta>(
-//   Object.fromEntries(
-//     Object.entries(metaUris).map(([key, uri]) => [key, new NamedNode(uri)]),
-//   )
-// )
 
 class Moves<V extends Variable> {
   list: Set<Move<V>> = new Set()
@@ -140,17 +113,76 @@ class Moves<V extends Variable> {
   }
 }
 
-type TermType = Term['termType']
-type VarIndex = `${TermType}:${string}`
-
+/**
+ * The engine to execute LdhopQuery.
+ *
+ * It works in steps. So you give it a resource, and it tells you what to add next, and what's no longer needed (TODO).
+ *
+ * Usage:
+ *
+ * const engine = new LdhopEngine(query, startingPoints, store?)
+ *
+ *
+ * Internal parts:
+ *
+ * store - RDF store that keeps track of the Linked Data
+ * variables - the map of variables we hop through
+ * moves -
+ * graphs -
+ *
+ * ## Algorithm:
+ *
+ * - add the defined starting variables
+ *
+ * ### Add a variable
+ * - if variable is already in the list of variables, done.
+ * - add a variable to the list of variables
+ * - if variable is required in any steps, get its URI without #hash part. If resource is needed, see if it is listed in graphs map already. If not, add it to the graphs map as missing.
+ * - go through all steps of the query, and if the variable matches any of the Match or TransformVariable steps, make the hop, collect the resulting target variable, save the Move and (Add the variable).
+ *
+ * ### Add missing resource/graph:
+ * - a resource/graph IRI, and all contained triples are provided
+ * - each added quad will be given a graph, which typically represents the final URL of the resource
+ * - TODO: keep track of any redirect
+ * - see which quads should be added and which ones should be removed
+ * - For each quad to add
+ *   - (Add the quad).
+ * - For each quad to remove
+ *   - (Remove the quad).
+ *
+ * - mark the graph as added or add it
+ *
+ * - return missing resources and no-more-needed resources (TODO)
+ *
+ * ### Add a quad:
+ * - add quad to the store
+ * - for each step:
+ *    - if the quad matches the step, get final variable, save the Move, and (Add the variable).
+ *
+ * ### Remove a quad:
+ * - remove quad from store
+ * - get all moves that this quad provided and (remove the move)
+ *
+ * ### Remove move:
+ * - remove move from moves.
+ * - if the move leads to a variable, and it is the last move supporting this variable, (remove the variable).
+ * - TODO prune in such a way that orphaned cycles get removed
+ *
+ * ### Remove variable:
+ * - remove variable value from variables
+ * - if the related graph is not supported by any other variable (remove the graph)
+ * - Remove all moves that this variable leads to
+ *
+ * ### Remove graph:
+ * - remove graph from graphs
+ * - for each matching quad (remove quad)
+ */
 export class LdhopEngine<V extends Variable = Variable> {
   public store: Store
   public query: LdhopQuery<V>
   public moves = new Moves<V>()
-  // private variables = new Map<V, Set<Term>>()
-  // variables index is indexed by
-  private variables = new Map<V, Map<VarIndex, Term>>()
-  private graphs = new Map<Uri, Graph>()
+  private variables = new Map<V, Map<TermId, Term>>()
+  private graphs = new Map<Uri, Graph<V>>()
 
   constructor(
     query: LdhopQuery<V>,
@@ -180,19 +212,136 @@ export class LdhopEngine<V extends Variable = Variable> {
   }
 
   getMissingResources() {
-    return this.getResources('missing')
+    return this.getGraphs(false)
+  }
+
+  addGraph(graphUri: string, quads: Quad[]) {
+    // TODO keep track of redirects
+
+    const graph: Graph<V> = this.graphs.get(graphUri) ?? {
+      uri: graphUri,
+      term: new NamedNode(graphUri),
+      added: false,
+      sourceVariables: new Map(),
+    }
+
+    const oldQuads = this.store.getQuads(null, null, null, graph.term)
+    // each added quad will be given a graph, which typically represents the final URL of the resource
+    const newQuads = quads.map(
+      q => new Quad(q.subject, q.predicate, q.object, graph.term),
+    )
+
+    // get quad additions and deletions of this graph from this.store
+    const additions = newQuads.filter(nq => !oldQuads.some(oq => nq.equals(oq)))
+    const deletions = oldQuads.filter(oq => !newQuads.some(nq => oq.equals(nq)))
+
+    // For each quad to add, (Add the quad).
+    additions.forEach(quad => this.addQuad(quad))
+    // For each quad to remove, (Remove the quad).
+    deletions.forEach(quad => this.removeQuad(quad))
+
+    // mark the graph as added or add it
+    graph.added = true
+    this.graphs.set(graphUri, graph)
+
+    return {
+      missing: this.getMissingResources(),
+      notNeeded: 'TODO',
+    }
+  }
+
+  private isVariablePresent(variable: V, node: Term) {
+    return Boolean(this.variables.get(variable)?.has(getTermId(node)))
+  }
+
+  addQuad(quad: Quad) {
+    // add quad to the store
+    this.store.addQuad(quad)
+
+    // find relevant matches in steps
+    const matchQuadElement = (
+      quad: Quad,
+      step: Match<V>,
+      element: QuadElement,
+    ): boolean => {
+      const el = step[element]
+      const node = quad[element]
+      if (!el) return true
+      if (isVariable<V>(el) && this.isVariablePresent(el, node)) return true
+
+      if (el === node.value) return true
+      return false
+    }
+
+    // hop the steps and assign new variables
+    this.query.forEach((step, i) => {
+      if (step.type !== 'match') return
+      if (!quadElements.every(element => matchQuadElement(quad, step, element)))
+        return
+      // if the quad matches the step, get final variable, save the Move, and (Add the variable).
+      const from: Variables<V> = {}
+      for (const element of quadElements) {
+        const el = step[element]
+        if (isVariable<V>(el)) from[el] = new Set([quad[element]])
+      }
+      const to = { [step.target]: new Set([quad[step.pick]]) } as Variables<V>
+      this.moves.add({ step: i, from, to, quad })
+      this.addVariable(step.target, quad[step.pick])
+    })
+  }
+
+  removeQuad(quad: Quad) {
+    this.store.removeQuad(quad)
+
+    // is there a move that was made thanks to this quad?
+    const moves = this.moves.byQuad[stringifyQuad(quad)] ?? new Set()
+
+    // now, for each move provided by this quad, remove the move
+    moves.forEach(move => this.removeMove(move))
+  }
+
+  private removeMove(move: Move<V>) {
+    // remove move from moves.
+    this.moves.remove(move)
+    const providedVariables = move.to
+
+    // if the move leads to a variable, and it is the last move supporting this variable, (remove the variable).
+    for (const variable in providedVariables) {
+      providedVariables[variable]!.forEach(term => {
+        // which moves provide this variable
+        const providingMoves = Array.from(
+          this.moves.providersOf[term.value],
+        ).filter(a =>
+          Array.from(a.to[variable] ?? []).some(t => t.equals(term)),
+        )
+
+        if (providingMoves.length === 0) this.removeVariable(variable, term)
+      })
+    }
+
+    // TODO prune orphaned cycles
   }
 
   private removeVariable(variable: V, node: Term) {
-    // TODO TO BE FIXED
-    this.variables.get(variable)?.delete(`${node.termType}:${node.value}`)
+    // remove variable value from variables
+    this.variables.get(variable)?.delete(getTermId(node))
     if (this.variables.get(variable)?.size === 0)
       this.variables.delete(variable)
 
+    // if the related graph is not supported by any other variable (remove the graph)
     if (node.termType === 'NamedNode') {
-      const resourceNode = new NamedNode(removeHashFromURI(node.value))
+      const graphNode = new NamedNode(removeHashFromURI(node.value))
 
-      this.removeResource(resourceNode.value)
+      const graph = this.graphs.get(graphNode.value)
+
+      // remove the supporting variable from its graph
+      graph?.sourceVariables.get(variable)?.delete(getTermId(node))
+
+      const leftoverGraphSources = new Set(
+        graph?.sourceVariables.values().flatMap(varMap => varMap.values()),
+      )
+
+      if (leftoverGraphSources.size === 0) this.removeGraph(graphNode.value)
     }
 
     // if the removed variable leads through some step to other variable, & nothing else leads to that variable, remove that variable
@@ -221,139 +370,19 @@ export class LdhopEngine<V extends Variable = Variable> {
     }
   }
 
-  addResource(
-    resource: string,
-    quads: Quad[],
-    status: 'success' | 'error' = 'success',
-  ) {
-    const graphUri = resource
-
-    const graph: Graph = this.graphs.get(graphUri) ?? {
-      uri: graphUri,
-      term: new NamedNode(graphUri),
-      added: false,
-    }
-
-    const resourceNode = new NamedNode(resource)
-
-    const oldResource = this.store.getQuads(null, null, null, resourceNode)
-
-    const [additions, deletions] = quadDiff(quads, oldResource as Quad[])
-
-    additions.forEach(quad => this.addQuad(quad))
-    deletions.forEach(quad => this.removeQuad(quad))
-
-    // mark the resource as added or failed depending on statusa
-    graph.added = true
-    this.graphs.set(graphUri, graph)
-  }
-
-  private isVariablePresent(variable: V, node: Term) {
-    return Boolean(
-      this.variables.get(variable)?.has(`${node.termType}:${node.value}`),
-    )
-  }
-
-  addQuad(quad: Quad) {
-    // find relevant matches in steps
-
-    this.store.addQuad(quad)
-
-    const matchQuadElement = (
-      quad: Quad,
-      step: Match<V>,
-      element: QuadElement,
-    ): boolean => {
-      const el = step[element]
-      const node = quad[element]
-      if (!el) return true
-      if (isVariable<V>(el) && this.isVariablePresent(el, node)) return true
-
-      if (el === node.value) return true
-      return false
-    }
-
-    // find relevant steps
-    const relevantSteps = Object.entries(this.query)
-      .filter(
-        (entry): entry is [string, Match<V>] =>
-          typeof entry[1] !== 'function' && entry[1].type === 'match',
-      )
-      .filter(([, step]) =>
-        // keep only steps that match given quad.
-        quadElements.every(element => matchQuadElement(quad, step, element)),
-      )
-      .map(([i, s]) => [+i, s] as const)
-
-    // hop the steps and assign new variables
-    for (const [i, step] of relevantSteps) {
-      // save the move
-      const from: Variables<V> = {}
-      for (const element of quadElements) {
-        const el = step[element]
-        if (isVariable<V>(el)) from[el] = new Set([quad[element]])
-      }
-      const to = { [step.target]: new Set([quad[step.pick]]) }
-      this.moves.add({ step: i, from, to, quad })
-
-      this.addVariable(step.target, quad[step.pick])
-    }
-
-    // when assigning new variables, make hops from the new variables, too
-  }
-
-  removeResource(uri: string) {
+  removeGraph(uri: string) {
     this.graphs.delete(uri)
     const quads = this.store.getQuads(null, null, null, new NamedNode(uri))
 
     quads.forEach(q => this.removeQuad(q))
   }
 
-  removeQuad(quad: Quad) {
-    this.store.removeQuad(quad)
-
-    // is there a move that was made thanks to this quad?
-    const moves = this.moves.byQuad[stringifyQuad(quad)] ?? new Set()
-
-    // now, for each move, let's go through the provided variables and remove those that have nothing; then remove the move
-    moves.forEach(move => {
-      const providedVariables = move.to
-
-      this.moves.remove(move)
-
-      // now, remove variables that are no longer provided by any move.
-      for (const variable in providedVariables) {
-        providedVariables[variable]!.forEach(term => {
-          // which moves provide this variable
-          const providingMoves = Array.from(
-            this.moves.providersOf[term.value],
-          ).filter(a =>
-            Array.from(a.to[variable] ?? []).some(t => t.equals(term)),
-          )
-
-          if (providingMoves.length === 0) this.removeVariable(variable, term)
-        })
-      }
-    })
-  }
-
   private hopFromVariable(variable: V, node: Term) {
-    // find steps relevant for this variable
-    const relevantSteps = this.query
-      .map((s, i) => [s, i] as const)
-      .filter(([step]) => {
-        if (
-          step.type === 'match' &&
-          quadElements.some(el => step[el] === variable)
-        )
-          return true
-        if (step.type === 'transform variable' && step.source === variable)
-          return true
-        return false
-      })
-
-    relevantSteps.forEach(([step, i]) => {
+    // continuation of adding a variable
+    // go through all steps of the query, and if the variable matches any of the Match or TransformVariable steps, make the hop, collect the resulting target variable, save the Move and (Add the variable).
+    this.query.forEach((step, i) => {
       if (step.type === 'transform variable') {
+        if (step.source !== variable) return
         const transformedNode = step.transform(node)
         if (transformedNode) {
           this.moves.add({
@@ -364,6 +393,7 @@ export class LdhopEngine<V extends Variable = Variable> {
           this.addVariable(step.target, transformedNode)
         }
       } else if (step.type === 'match') {
+        if (quadElements.every(el => step[el] !== variable)) return
         // try to match quad(s) relevant for this step
         const generateRules = (step: Match<V>, element: QuadElement) => {
           let outputs = new Set<Term | null>()
@@ -412,32 +442,38 @@ export class LdhopEngine<V extends Variable = Variable> {
     // if the variable is already added, there's nothing to do
     if (this.isVariablePresent(variable, node)) return
 
+    // add a variable to the list of variables
     if (!this.variables.has(variable)) this.variables.set(variable, new Map())
+    this.variables.get(variable)!.set(getTermId(node), node)
 
-    this.variables.get(variable)!.set(`${node.termType}:${node.value}`, node)
-
-    // if the variable is used in other queries and hasn't been given status, mark it as missing
+    // if the variable is required in any steps...
     const isInAddResources = this.query.some(
       a => a.type === 'add resources' && a.variable === variable,
     )
-
     const isInMatch = this.query.some(
       a => a.type === 'match' && quadElements.some(el => a[el] === variable),
     )
-
     const isNeeded = isInAddResources || isInMatch
-
     if (isNeeded && node.termType === 'NamedNode') {
+      //... see if the resource graph has been added to the graph map
+      // and if not, add it
       const graphName = removeHashFromURI(node.value)
 
-      this.graphs.set(
-        graphName,
-        this.graphs.get(graphName) ?? {
+      if (!this.graphs.has(graphName))
+        this.graphs.set(graphName, {
           added: false,
           uri: graphName,
           term: node,
-        },
-      )
+          sourceVariables: new Map(),
+        })
+
+      const graph = this.graphs.get(graphName)!
+
+      // add the variable to graph sources
+      if (!graph.sourceVariables.has(variable))
+        graph.sourceVariables.set(variable, new Map())
+
+      graph.sourceVariables.get(variable)!.set(getTermId(node), node)
     }
 
     this.hopFromVariable(variable, node)
@@ -473,26 +509,6 @@ export class LdhopEngine<V extends Variable = Variable> {
     )
   }
 
-  /**
-   * @deprecated use getGraphs instead
-   */
-  public getResources(status?: 'missing' | 'added' | 'failed') {
-    switch (status) {
-      case undefined: {
-        return this.getGraphs()
-      }
-      case 'missing': {
-        return this.getGraphs(false)
-      }
-      case 'added': {
-        throw new Error('ambiguous')
-      }
-      case 'failed': {
-        throw new Error('ambiguous')
-      }
-    }
-  }
-
   public getGraphs(added?: boolean) {
     if (typeof added !== 'boolean') return new Set(this.graphs.keys())
 
@@ -504,18 +520,6 @@ export class LdhopEngine<V extends Variable = Variable> {
   }
 }
 
-const quadDiff = (newQuads: Quad[], oldQuads: Quad[]): [Quad[], Quad[]] => {
-  // quickly bail out in simple cases
-  if (oldQuads.length === 0) return [newQuads, []]
-  if (newQuads.length === 0) return [[], oldQuads]
-
-  // additions are new quads minus old quads
-  const additions = newQuads.filter(nq => !oldQuads.some(oq => nq.equals(oq)))
-  const deletions = oldQuads.filter(oq => !newQuads.some(nq => oq.equals(nq)))
-
-  return [additions, deletions]
-}
-
 // type guard for testing variables
 function isVariable<V extends Variable = Variable>(
   value: string | undefined,
@@ -525,3 +529,10 @@ function isVariable<V extends Variable = Variable>(
 
 const termSetToStringSet = (set: Set<Term>): Set<string> =>
   new Set([...set].map(term => term.value))
+
+/**
+ * Get unique term identifier
+ */
+const getTermId = (term: Term): TermId => {
+  return `${term.termType}:${term.id}`
+}
