@@ -174,7 +174,7 @@ describe('Adding resources to LdhopEngine', () => {
     expect(engine.getGraphs(true)).to.have.length(2)
   })
 
-  it.only('should keep track of redirects and not request already added resources', async () => {
+  it('should keep track of redirects and not request already added resources', async () => {
     const engine = new LdhopEngine(friendOfAFriendQuery, {
       [Var.person]: new Set(['https://id.example']),
     })
@@ -183,9 +183,22 @@ describe('Adding resources to LdhopEngine', () => {
 
     expect(missingResources.size).to.equal(1)
 
-    engine.addGraph('https://data.example', [], 'https://id.example')
+    engine.addGraph(
+      'https://data.example/profile/card',
+      [],
+      'https://id.example',
+    )
 
     const missingResourcesAfter = engine.getMissingResources()
     expect(missingResourcesAfter.size).to.equal(0)
+
+    const allGraphs = engine.getGraphs()
+    expect(allGraphs.size).to.equal(2)
+
+    engine.removeGraph('https://data.example/profile/card')
+
+    // and redirects also get removed
+    const allGraphs2 = engine.getGraphs()
+    expect(allGraphs2.size).to.equal(0)
   })
 })

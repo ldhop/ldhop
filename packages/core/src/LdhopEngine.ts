@@ -10,7 +10,7 @@ interface Graph<V extends Variable> {
   uri: Uri
   term: NamedNode
   sourceVariables: VariableMap<V>
-  redirectsTo?: Graph<V>
+  redirectsFrom: Set<Uri>
 }
 type UriVariables<V extends Variable> = Partial<{ [key in V]: Set<string> }>
 type VariableMap<V extends Variable, Value = Term> = Map<V, Map<TermId, Value>>
@@ -224,24 +224,20 @@ export class LdhopEngine<V extends Variable = Variable> {
   }
 
   addGraph(actualUri: string, quads: Quad[], requestedUri?: string) {
-    // TODO keep track of redirects
-
-    const graph: Graph<V> = this.graphs.get(actualUri) ?? {
-      uri: actualUri,
-      term: new NamedNode(actualUri),
+    const actualGraphUri = removeHashFromURI(actualUri)
+    const requestedGraphUri = requestedUri && removeHashFromURI(requestedUri)
+    const graph: Graph<V> = this.graphs.get(actualGraphUri) ?? {
+      uri: actualGraphUri,
+      term: new NamedNode(actualGraphUri),
       added: false,
       sourceVariables: new Map(),
+      redirectsFrom: new Set(),
     }
 
-    if (
-      requestedUri &&
-      removeHashFromURI(requestedUri) !== removeHashFromURI(actualUri)
-    ) {
-      const requestGraph = this.graphs.get(removeHashFromURI(requestedUri))
-      if (requestGraph) {
-        requestGraph.added = true
-        requestGraph.redirectsTo = graph
-      }
+    if (requestedGraphUri && requestedGraphUri !== actualGraphUri) {
+      const requestGraph = this.graphs.get(requestedGraphUri)
+      if (requestGraph) requestGraph.added = true
+      graph.redirectsFrom.add(requestedGraphUri)
     }
 
     const oldQuads = this.store.getQuads(null, null, null, graph.term)
@@ -261,7 +257,7 @@ export class LdhopEngine<V extends Variable = Variable> {
 
     // mark the graph as added or add it
     graph.added = true
-    this.graphs.set(actualUri, graph)
+    this.graphs.set(actualGraphUri, graph)
 
     return {
       missing: this.getMissingResources(),
@@ -453,7 +449,11 @@ export class LdhopEngine<V extends Variable = Variable> {
   }
 
   removeGraph(uri: string) {
-    this.graphs.delete(uri)
+    const redirectsFrom = this.graphs.get(uri)?.redirectsFrom ?? new Set()
+
+    this.graphs.delete(removeHashFromURI(uri))
+    for (const sourceUri of redirectsFrom) this.graphs.delete(sourceUri)
+
     const quads = this.store.getQuads(null, null, null, new NamedNode(uri))
 
     quads.forEach(q => this.removeQuad(q))
@@ -556,6 +556,7 @@ export class LdhopEngine<V extends Variable = Variable> {
           uri: graphName,
           term: node,
           sourceVariables: new Map(),
+          redirectsFrom: new Set(),
         })
 
       const graph = this.graphs.get(graphName)!
