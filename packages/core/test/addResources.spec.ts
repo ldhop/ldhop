@@ -146,7 +146,7 @@ describe('Adding resources to LdhopEngine', () => {
     expect(engine.getVariable(Var.person)?.size).to.equal(7)
   })
 
-  it('should add errored resources and result in nothing missing', () => {
+  it('should add errored resources and result in nothing missing', async () => {
     const engine = new LdhopEngine(friendOfAFriendQuery, {
       [Var.person]: new Set(['https://id.person.example/profile#me']),
     })
@@ -172,5 +172,20 @@ describe('Adding resources to LdhopEngine', () => {
     expect(engine.getGraphs()).to.have.length(2)
     expect(engine.getGraphs(false)).to.have.length(0)
     expect(engine.getGraphs(true)).to.have.length(2)
+  })
+
+  it.only('should keep track of redirects and not request already added resources', async () => {
+    const engine = new LdhopEngine(friendOfAFriendQuery, {
+      [Var.person]: new Set(['https://id.example']),
+    })
+
+    const missingResources = engine.getMissingResources()
+
+    expect(missingResources.size).to.equal(1)
+
+    engine.addGraph('https://data.example', [], 'https://id.example')
+
+    const missingResourcesAfter = engine.getMissingResources()
+    expect(missingResourcesAfter.size).to.equal(0)
   })
 })

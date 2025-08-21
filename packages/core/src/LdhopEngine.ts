@@ -10,6 +10,7 @@ interface Graph<V extends Variable> {
   uri: Uri
   term: NamedNode
   sourceVariables: VariableMap<V>
+  redirectsTo?: Graph<V>
 }
 type UriVariables<V extends Variable> = Partial<{ [key in V]: Set<string> }>
 type VariableMap<V extends Variable, Value = Term> = Map<V, Map<TermId, Value>>
@@ -222,14 +223,25 @@ export class LdhopEngine<V extends Variable = Variable> {
     return this.getGraphs(false)
   }
 
-  addGraph(graphUri: string, quads: Quad[]) {
+  addGraph(actualUri: string, quads: Quad[], requestedUri?: string) {
     // TODO keep track of redirects
 
-    const graph: Graph<V> = this.graphs.get(graphUri) ?? {
-      uri: graphUri,
-      term: new NamedNode(graphUri),
+    const graph: Graph<V> = this.graphs.get(actualUri) ?? {
+      uri: actualUri,
+      term: new NamedNode(actualUri),
       added: false,
       sourceVariables: new Map(),
+    }
+
+    if (
+      requestedUri &&
+      removeHashFromURI(requestedUri) !== removeHashFromURI(actualUri)
+    ) {
+      const requestGraph = this.graphs.get(removeHashFromURI(requestedUri))
+      if (requestGraph) {
+        requestGraph.added = true
+        requestGraph.redirectsTo = graph
+      }
     }
 
     const oldQuads = this.store.getQuads(null, null, null, graph.term)
@@ -249,7 +261,7 @@ export class LdhopEngine<V extends Variable = Variable> {
 
     // mark the graph as added or add it
     graph.added = true
-    this.graphs.set(graphUri, graph)
+    this.graphs.set(actualUri, graph)
 
     return {
       missing: this.getMissingResources(),
