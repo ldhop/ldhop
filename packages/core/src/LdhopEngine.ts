@@ -11,13 +11,12 @@ interface Graph<V extends Variable> {
   term: NamedNode
   sourceVariables: VariableMap<V>
 }
-type Variables<V extends Variable> = Partial<{ [key in V]: Set<Term> }>
 type UriVariables<V extends Variable> = Partial<{ [key in V]: Set<string> }>
-type VariableMap<V extends Variable> = Map<V, Map<TermId, Term>>
+type VariableMap<V extends Variable, Value = Term> = Map<V, Map<TermId, Value>>
 
 interface Move<V extends Variable> {
-  from: Variables<V>
-  to: Variables<V>
+  from: VariableMap<V, Term>
+  to: VariableMap<V, Term>
   // step: LdhopQuery<V>[number]
   step: number
   quad?: Quad
@@ -36,30 +35,34 @@ const quadElements = Object.values(QuadElement)
 
 class Moves<V extends Variable> {
   list: Set<Move<V>> = new Set()
-  provides: { [key: string]: Set<Move<V>> } = {}
-  providersOf: { [key: string]: Set<Move<V>> } = {}
+  // moves that are provided by the variable
+  providedByVariable: VariableMap<V, Set<Move<V>>> = new Map() // { [key: string]: Set<Move<V>> } = {}
+  // moves that provide the variable
+  provideVariable: VariableMap<V, Set<Move<V>>> = new Map() // { [key: string]: Set<Move<V>> } = {}
   byQuad: { [key: string]: Set<Move<V>> } = {}
 
   add(move: Move<V>) {
     // add step to list
     this.list.add(move)
     // add step to "provides" index
-    for (const uri in move.from) {
-      if (isVariable(uri)) {
-        for (const term of move.from[uri]!) {
-          this.provides[term.value] ??= new Set()
-          this.provides[term.value].add(move)
-        }
+    for (const [variable, termMap] of move.from) {
+      for (const [termId] of termMap) {
+        if (!this.providedByVariable.has(variable))
+          this.providedByVariable.set(variable, new Map())
+        if (!this.providedByVariable.get(variable)!.has(termId))
+          this.providedByVariable.get(variable)?.set(termId, new Set())
+        this.providedByVariable.get(variable)!.get(termId)!.add(move)
       }
     }
 
     // add step to "providersOf" index
-    for (const uri in move.to) {
-      if (isVariable(uri)) {
-        for (const term of move.to[uri]!) {
-          this.providersOf[term.value] ??= new Set()
-          this.providersOf[term.value].add(move)
-        }
+    for (const [variable, termMap] of move.to) {
+      for (const [termId] of termMap) {
+        if (!this.provideVariable.has(variable))
+          this.provideVariable.set(variable, new Map())
+        if (!this.provideVariable.get(variable)!.has(termId))
+          this.provideVariable.get(variable)?.set(termId, new Set())
+        this.provideVariable.get(variable)!.get(termId)!.add(move)
       }
     }
 
@@ -73,21 +76,17 @@ class Moves<V extends Variable> {
   remove(move: Move<V>) {
     this.list.delete(move)
     // remove step from "provides" index
-    for (const uri in move.from) {
-      if (isVariable(uri) && move.from[uri]) {
-        for (const term of move.from[uri]) {
-          this.provides[term.value].delete(move)
-        }
-      }
-    }
+    move.from.forEach((termMap, variable) => {
+      termMap.forEach((term, termId) => {
+        this.providedByVariable.get(variable)?.get(termId)?.delete(move)
+      })
+    })
     // remove step from "providersOf" index
-    for (const uri in move.to) {
-      if (isVariable(uri) && move.to[uri]) {
-        for (const term of move.to[uri]) {
-          this.providersOf[term.value].delete(move)
-        }
-      }
-    }
+    move.to.forEach((termMap, variable) => {
+      termMap.forEach((term, termId) => {
+        this.provideVariable.get(variable)?.get(termId)?.delete(move)
+      })
+    })
 
     // remove step from byQuad index
     if (move.quad) {
@@ -96,20 +95,28 @@ class Moves<V extends Variable> {
   }
 
   /* this is a debugging feature, it will return a list of current moves as a string */
-  print = () => {
-    let output = ''
-    this.list.forEach(move => {
-      const from = Object.values(move.from)
-        .flatMap(f => Array.from(f as Set<Term>))
-        .map(f => f.value)
-      const to = Object.values(move.to)
-        .flatMap(f => Array.from(f as Set<Term>))
-        .map(f => f.value)
+  print(): string {
+    const moveStrings: string[] = []
 
-      output += from.concat(' ') + ' ==> ' + to.concat(' ')
-    })
+    for (const move of this.list) {
+      const fromStr = this.formatVariableMap(move.from)
+      const toStr = this.formatVariableMap(move.to)
+      moveStrings.push(`${fromStr} ==> ${toStr}`)
+    }
 
-    return output
+    return moveStrings.join('\n')
+  }
+
+  private formatVariableMap(varMap: VariableMap<V, Term>): string {
+    const pairs: string[] = []
+
+    for (const [variable, termMap] of varMap) {
+      for (const [, term] of termMap) {
+        pairs.push(`${variable}:${term.id}`)
+      }
+    }
+
+    return pairs.join(', ')
   }
 }
 
@@ -202,8 +209,8 @@ export class LdhopEngine<V extends Variable = Variable> {
 
           this.moves.add({
             step: -1,
-            from: {} as Variables<V>,
-            to: { [key]: new Set([term]) } as Variables<V>,
+            from: new Map() as VariableMap<V>,
+            to: new Map([[key, new Map([[getTermId(term), term]])]]),
           })
           this.addVariable(key, term)
         }
@@ -279,12 +286,19 @@ export class LdhopEngine<V extends Variable = Variable> {
       if (!quadElements.every(element => matchQuadElement(quad, step, element)))
         return
       // if the quad matches the step, get final variable, save the Move, and (Add the variable).
-      const from: Variables<V> = {}
+      const from: VariableMap<V> = new Map()
       for (const element of quadElements) {
         const el = step[element]
-        if (isVariable<V>(el)) from[el] = new Set([quad[element]])
+        if (isVariable<V>(el)) {
+          if (!from.has(el)) from.set(el, new Map())
+
+          from.get(el)!.set(getTermId(quad[element]), quad[element])
+        }
       }
-      const to = { [step.target]: new Set([quad[step.pick]]) } as Variables<V>
+      const to: VariableMap<V> = new Map([
+        [step.target, new Map([[getTermId(quad[step.pick]), quad[step.pick]]])],
+      ])
+
       this.moves.add({ step: i, from, to, quad })
       this.addVariable(step.target, quad[step.pick])
     })
@@ -303,23 +317,95 @@ export class LdhopEngine<V extends Variable = Variable> {
   private removeMove(move: Move<V>) {
     // remove move from moves.
     this.moves.remove(move)
-    const providedVariables = move.to
 
     // if the move leads to a variable, and it is the last move supporting this variable, (remove the variable).
-    for (const variable in providedVariables) {
-      providedVariables[variable]!.forEach(term => {
-        // which moves provide this variable
-        const providingMoves = Array.from(
-          this.moves.providersOf[term.value],
-        ).filter(a =>
-          Array.from(a.to[variable] ?? []).some(t => t.equals(term)),
-        )
+    move.to.forEach((termMap, variable) => {
+      termMap.forEach((term, termId) => {
+        const providingMoves = this.moves.provideVariable
+          .get(variable)
+          ?.get(termId)
 
-        if (providingMoves.length === 0) this.removeVariable(variable, term)
+        if (!providingMoves || providingMoves.size === 0)
+          this.removeVariable(variable, term)
+        else this.detectAndRemoveOrphans(variable, term)
       })
+    })
+  }
+
+  private coloredVariables: VariableMap<V> = new Map()
+
+  /**
+   * First iteration: color all variables that follow from the initial variable
+   * Then see if the resulting colored variables are held by any uncolored variables.
+   */
+  private colorDependents(variable: V, term: Term) {
+    if (this.coloredVariables.get(variable)?.has(getTermId(term))) return
+    if (!this.coloredVariables.has(variable))
+      this.coloredVariables.set(variable, new Map())
+    this.coloredVariables.get(variable)?.set(getTermId(term), term)
+    const movesProvidedByVariable = this.moves.providedByVariable
+      .get(variable)
+      ?.get(getTermId(term))
+
+    if (movesProvidedByVariable)
+      for (const move of movesProvidedByVariable) {
+        move.to.forEach((nextTermMap, nextVariable) => {
+          nextTermMap.forEach(nextTerm => {
+            this.colorDependents(nextVariable, nextTerm)
+          })
+        })
+      }
+  }
+
+  private detectAndRemoveOrphans(variable: V, term: Term) {
+    this.coloredVariables = new Map()
+    this.colorDependents(variable, term)
+    // now see if any colored var is held by uncolored
+    // Check if the entire set of colored variables is held by uncolored variables
+    let isHeldByUncolored = false
+
+    // Look at all moves that produce any colored variable
+    for (const [coloredVariable, termMap] of this.coloredVariables) {
+      for (const [termId] of termMap) {
+        const producingMoves = this.moves.provideVariable
+          .get(coloredVariable)
+          ?.get(termId)
+
+        if (producingMoves) {
+          for (const move of producingMoves) {
+            // Check if ALL variables in this move's "from" are uncolored
+            let allFromVariablesUncolored = true
+            for (const [fromVariable, fromTermMap] of move.from) {
+              for (const [fromTermId] of fromTermMap) {
+                if (this.coloredVariables.get(fromVariable)?.has(fromTermId)) {
+                  allFromVariablesUncolored = false
+                  break
+                }
+              }
+              if (!allFromVariablesUncolored) break
+            }
+
+            if (allFromVariablesUncolored) {
+              // Found one move with all uncolored "from" variables
+              // This holds the entire colored set
+              isHeldByUncolored = true
+              break
+            }
+          }
+          if (isHeldByUncolored) break
+        }
+      }
+      if (isHeldByUncolored) break
     }
 
-    // TODO prune orphaned cycles
+    if (!isHeldByUncolored) {
+      // The entire set is orphaned - remove all colored variables
+      for (const [coloredVariable, termMap] of this.coloredVariables) {
+        for (const [, coloredTerm] of termMap) {
+          this.removeVariable(coloredVariable, coloredTerm)
+        }
+      }
+    }
   }
 
   private removeVariable(variable: V, node: Term) {
@@ -346,14 +432,12 @@ export class LdhopEngine<V extends Variable = Variable> {
 
     // if the removed variable leads through some step to other variable, & nothing else leads to that variable, remove that variable
 
-    const uri = node.value
+    const movesFromVariable = this.moves.providedByVariable
+      .get(variable)
+      ?.get(getTermId(node))
 
-    const movesFromVariable = Array.from(this.moves.provides[uri] ?? []).filter(
-      move =>
-        Array.from(move.from[variable] ?? []).some(term => term.equals(node)),
-    )
-
-    for (const move of movesFromVariable) this.removeMove(move)
+    if (movesFromVariable)
+      for (const move of movesFromVariable) this.removeMove(move)
   }
 
   removeGraph(uri: string) {
@@ -372,8 +456,13 @@ export class LdhopEngine<V extends Variable = Variable> {
         const transformedNode = step.transform(node)
         if (transformedNode) {
           this.moves.add({
-            from: { [step.source]: new Set([node]) } as Variables<V>,
-            to: { [step.target]: new Set([transformedNode]) } as Variables<V>,
+            from: new Map([[step.source, new Map([[getTermId(node), node]])]]),
+            to: new Map([
+              [
+                step.target,
+                new Map([[getTermId(transformedNode), transformedNode]]),
+              ],
+            ]),
             step: i,
           })
           this.addVariable(step.target, transformedNode)
@@ -408,11 +497,15 @@ export class LdhopEngine<V extends Variable = Variable> {
                 for (const quad of quads) {
                   const targetVar = step.target
                   const target = quad[step.pick]
-                  const from: Variables<V> = {}
+                  const from: VariableMap<V> = new Map()
                   for (const el of quadElements)
-                    if (isVariable(step[el]))
-                      from[step[el]] = new Set([quad[el]])
-                  const to = { [targetVar]: new Set([target]) } as Variables<V>
+                    if (isVariable(step[el])) {
+                      if (!from.has(step[el])) from.set(step[el], new Map())
+                      from.get(step[el])!.set(getTermId(quad[el]), quad[el])
+                    }
+                  const to: VariableMap<V> = new Map([
+                    [targetVar, new Map([[getTermId(target), target]])],
+                  ])
                   this.moves.add({ from, to, step: i, quad })
                   this.addVariable(targetVar, target)
                 }
