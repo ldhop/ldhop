@@ -11,6 +11,7 @@ interface Graph<V extends Variable> {
   term: NamedNode
   sourceVariables: VariableMap<V>
   redirectsFrom: Set<Uri>
+  redirectTo?: Uri
 }
 type UriVariables<V extends Variable> = Partial<{ [key in V]: Set<string> }>
 type VariableMap<V extends Variable, Value = Term> = Map<V, Map<TermId, Value>>
@@ -236,7 +237,10 @@ export class LdhopEngine<V extends Variable = Variable> {
 
     if (requestedGraphUri && requestedGraphUri !== actualGraphUri) {
       const requestGraph = this.graphs.get(requestedGraphUri)
-      if (requestGraph) requestGraph.added = true
+      if (requestGraph) {
+        requestGraph.added = true
+        requestGraph.redirectTo = actualGraphUri
+      }
       graph.redirectsFrom.add(requestedGraphUri)
     }
 
@@ -449,10 +453,14 @@ export class LdhopEngine<V extends Variable = Variable> {
   }
 
   removeGraph(uri: string) {
-    const redirectsFrom = this.graphs.get(uri)?.redirectsFrom ?? new Set()
+    const graphUri = removeHashFromURI(uri)
+    const graph = this.graphs.get(graphUri)
+    const redirectsFrom = graph?.redirectsFrom ?? new Set()
+    const redirectTo = graph?.redirectTo
 
-    this.graphs.delete(removeHashFromURI(uri))
+    this.graphs.delete(graphUri)
     for (const sourceUri of redirectsFrom) this.graphs.delete(sourceUri)
+    if (redirectTo) this.graphs.delete(redirectTo)
 
     const quads = this.store.getQuads(null, null, null, new NamedNode(uri))
 
