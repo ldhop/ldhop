@@ -1,7 +1,7 @@
-import type { Match, RdfQuery } from '@ldhop/core'
+import type { Match, RdfQuery, Variable } from '@ldhop/core'
 import { ldp, rdfs, solid, space } from 'rdf-namespaces'
 
-export const personInbox: Match = {
+export const personInbox: Match<Variable> = {
   type: 'match',
   subject: '?person',
   predicate: ldp.inbox,

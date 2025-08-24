@@ -5540,15 +5540,15 @@ randombytes@^2.1.0:
   dependencies:
     safe-buffer "^5.1.0"
 
-rdf-namespaces@^1.12.0:
-  version "1.12.0"
-  resolved "https://registry.npmjs.org/rdf-namespaces/-/rdf-namespaces-1.12.0.tgz#26f58683502df686aa3c00fe9283753c52540f95"
-  integrity sha512-Fk48ltssXTmyXeoLqC0y85CEAhhWH+wvu7bkr9WxsKUyFDcKwWSHOK7CvRq3XRampy1qhSrOsIQ8U1gQDCh5MA==
-
 rdf-namespaces@^1.15.0:
   version "1.15.0"
   resolved "https://registry.npmjs.org/rdf-namespaces/-/rdf-namespaces-1.15.0.tgz#8add335677fffc88460ec72c4ca48e4cba5249aa"
   integrity sha512-8A0WBDfCxMd64FkYEGs6s42Qtl+20NUow55KiUoLRj+d5V9szCrTtEYKMZK/wW7i1/Crhi3JzENpDivJBn8CMQ==
+
+rdf-namespaces@^1.16.0:
+  version "1.16.0"
+  resolved "https://registry.npmjs.org/rdf-namespaces/-/rdf-namespaces-1.16.0.tgz#a9ba2faf2da03180873073a89f7d81a6f987c4af"
+  integrity sha512-U0V3syFvDjBtf1kDSCZcv+0dLts9hgz52az3S0UCtqRuVqJGfhrrkOqI59jRKp/xr/ewY3ozjg896r0HrEl42Q==
 
 react-dom@^18.2.0:
   version "18.3.1"

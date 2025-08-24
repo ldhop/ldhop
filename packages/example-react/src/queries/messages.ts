@@ -1,8 +1,8 @@
 import type { RdfQuery } from '@ldhop/core'
 import { NamedNode, type Term } from 'n3'
-import { dct, ldp, rdf, solid, space } from 'rdf-namespaces'
+import { as, dct, ldp, rdf, solid, space } from 'rdf-namespaces'
 import { getContainer } from '../utils/helpers'
-import { as, meeting, wf } from '../utils/rdf-namespaces'
+import { meeting, wf } from '../utils/rdf-namespaces'
 import { personInbox, profileDocuments } from './profile'
 
 export const inboxMessagesQuery: RdfQuery = [

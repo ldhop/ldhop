@@ -1,6 +1,5 @@
 import type { RdfQuery } from '@ldhop/core'
-import { foaf, ldp, rdf, rdfs } from 'rdf-namespaces'
-import { as } from '../utils/rdf-namespaces'
+import { as, foaf, ldp, rdf, rdfs } from 'rdf-namespaces'
 import { personInbox, profileDocuments } from './profile'
 
 export const contactsQuery: RdfQuery = [
