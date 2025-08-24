@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs'
 import { join } from 'path'
-import type { QueryAndStore } from '../src/QueryAndStore.js'
+import { LdhopEngine, QueryAndStore, Variable } from '../src/index.js'
 import { type Fetch, run as runWithFetch } from '../src/utils/helpers.js'
 
 // get current working directory
@@ -24,4 +24,6 @@ const staticFetch = (async (uri: string) => {
   }
 }) as Fetch
 
-export const run = (qas: QueryAndStore) => runWithFetch(qas, staticFetch)
+export const run = <V extends Variable = Variable>(
+  qas: QueryAndStore<V> | LdhopEngine<V>,
+) => runWithFetch<V>(qas, staticFetch)

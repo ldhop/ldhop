@@ -1,6 +1,6 @@
 import { NamedNode, Quad, Store, type Term } from 'n3'
 import type { ValuesType } from 'utility-types'
-import type { Match, RdfQuery } from './index.js'
+import type { Match, RdfQuery, Variable as VariableType } from './types.js'
 import { removeHashFromURI } from './utils/helpers.js'
 
 type Variables = { [key: string]: Set<Term> }
@@ -114,13 +114,16 @@ class Moves {
   }
 }
 
-export class QueryAndStore {
+/**
+ * @deprecated use LdhopEngine instead
+ */
+export class QueryAndStore<V extends VariableType = VariableType> {
   store: Store
-  query: RdfQuery
+  query: RdfQuery<V>
   moves = new Moves()
 
   constructor(
-    query: RdfQuery,
+    query: RdfQuery<V>,
     startingPoints: UriVariables,
     store = new Store(),
   ) {
@@ -128,6 +131,7 @@ export class QueryAndStore {
     this.query = query
 
     Object.entries(startingPoints).forEach(([variable, uris]) => {
+      variable = variable.startsWith('?') ? variable.slice(1) : variable
       uris.forEach(uri => {
         // we add a move for each variable that is provided at the beginning
         // sometimes circular reference would try to remove them
@@ -229,7 +233,10 @@ export class QueryAndStore {
       ]),
     ) as Record<QuadElement, Variable[]>
 
-    const matchQuadElement = (step: Match, element: QuadElement): boolean => {
+    const matchQuadElement = (
+      step: Match<V>,
+      element: QuadElement,
+    ): boolean => {
       const el = step[element]
       const node = quad[element]
       if (!el) return true
@@ -244,7 +251,7 @@ export class QueryAndStore {
     // find relevant steps
     const relevantSteps = Object.entries(this.query)
       .filter(
-        (entry): entry is [string, Match] =>
+        (entry): entry is [string, Match<V>] =>
           typeof entry[1] !== 'function' && entry[1].type === 'match',
       )
       .filter(([, step]) =>
@@ -288,6 +295,7 @@ export class QueryAndStore {
 
       this.moves.remove(move)
 
+      // now, remove variables that are no longer provided by any move.
       for (const variable in providedVariables) {
         providedVariables[variable].forEach(term => {
           // which moves provide this variable
@@ -336,7 +344,7 @@ export class QueryAndStore {
         }
       } else if (step.type === 'match') {
         // try to match quad(s) relevant for this step
-        const generateRules = (step: Match, element: QuadElement) => {
+        const generateRules = (step: Match<V>, element: QuadElement) => {
           let outputs = new Set<Term | null>()
           const s = step[element]
           if (!s) outputs.add(null)
@@ -442,6 +450,7 @@ export class QueryAndStore {
    * If you provide variable name, this method will return URIs that belong to that variable
    */
   getVariable(variableName: string) {
+    if (variableName.startsWith('?')) variableName = variableName.slice(1)
     return this.store
       .getSubjects(meta.variable, new Variable(variableName), meta.meta)
       .map(s => s.value)

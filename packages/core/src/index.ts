@@ -1,5 +1,5 @@
-import type { Term } from 'n3'
-import type { QueryAndStore } from './QueryAndStore.js'
+import type { LdhopQuery, Variable } from './types.js'
+export { LdhopEngine } from './LdhopEngine.js'
 export { QueryAndStore } from './QueryAndStore.js'
 export {
   fetchRdfDocument,
@@ -7,29 +7,13 @@ export {
   type FetchRdfReturnType,
 } from './utils/helpers.js'
 
-export type TransformStore = (qas: QueryAndStore) => void
+export type * from './types.js'
 
-export type Match = {
-  type: 'match'
-  subject?: string
-  predicate?: string
-  object?: string
-  graph?: string
-  pick: 'subject' | 'predicate' | 'object' | 'graph'
-  target: `?${string}`
+/**
+ * A helper function to help with typing LdhopQuery and intellisense of the variables
+ */
+export function ldhopQuery<V extends Variable>(
+  operations: LdhopQuery<V>,
+): LdhopQuery<V> {
+  return operations
 }
-
-export type TransformVariable = {
-  type: 'transform variable'
-  source: `?${string}`
-  target: `?${string}`
-  transform: (uri: Term) => Term | undefined
-}
-
-type AddResources = { type: 'add resources'; variable: `?${string}` }
-export type RdfQuery = (
-  | TransformStore
-  | Match
-  | AddResources
-  | TransformVariable
-)[]

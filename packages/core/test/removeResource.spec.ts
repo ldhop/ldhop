@@ -1,26 +1,26 @@
 import { expect } from 'chai'
-import { QueryAndStore } from '../src/QueryAndStore.js'
-import { inboxMessagesQuery } from './queries.js'
+import { LdhopEngine } from '../src/index.js'
+import { inboxMessagesQuery, Var } from './queries.js'
 import { run } from './run.js'
 
-describe('Removing resource', () => {
+describe('Removing resource from LdhopEngine', () => {
   it('[remove link] should correctly update the results', async () => {
     // first run the normal query
-    const qas = new QueryAndStore(inboxMessagesQuery, {
-      person: new Set(['https://person.example/profile/card#me']),
+    const engine = new LdhopEngine(inboxMessagesQuery, {
+      [Var.person]: new Set(['https://person.example/profile/card#me']),
     })
 
-    await run(qas)
+    await run(engine)
 
-    const notificationsBefore = qas.getVariable('longChatNotification')
+    const notificationsBefore = engine.getVariable(Var.longChatNotification)
     expect(notificationsBefore).to.have.length(2)
 
     // then delete the notification - replace resource with empty
-    qas.addResource('https://person.example/inbox/notification1', [])
+    engine.addGraph('https://person.example/inbox/notification1', [])
 
-    await run(qas)
+    await run(engine)
 
-    const notificationsAfter = qas.getVariable('longChatNotification')
+    const notificationsAfter = engine.getVariable(Var.longChatNotification)
     expect(notificationsAfter).to.have.length(1)
   })
 })

@@ -1,24 +1,24 @@
 import { expect } from 'chai'
 import { NamedNode, Quad, Store } from 'n3'
 import { foaf } from 'rdf-namespaces'
-import { LdhopEngine } from '../src/LdhopEngine.js'
-import { friendOfAFriendQuery, Var } from './queries.js'
-import { fetchRdf } from './resources/index.js'
-import { run } from './run.js'
+import { QueryAndStore } from '../../src/QueryAndStore.js'
+import { friendOfAFriendQuery } from '../queries.js'
+import { fetchRdf } from '../resources/index.js'
+import { run } from '../run.js'
 
-describe('Handling orphaned cycles in LdhopEngine', () => {
+describe.skip('Handling orphaned cycles in QueryAndStore', () => {
   it('should clear disconnected cycles', async () => {
     const resource = 'https://personx.example/profile/card'
     const personx = resource + '#me'
-    const engine = new LdhopEngine(friendOfAFriendQuery, {
-      [Var.person]: new Set([personx]),
+    const qas = new QueryAndStore(friendOfAFriendQuery, {
+      person: new Set([personx]),
     })
 
-    await run(engine)
+    await run(qas)
 
-    const personsBefore = engine.getVariable(Var.person)
+    const personsBefore = qas.getVariable('person')
     expect(personsBefore).to.have.length(7)
-    const moveSizeBefore = engine.moves.list.size
+    const moveSizeBefore = qas.moves.list.size
 
     const personWithoutConnection = new Store(fetchRdf(resource))
 
@@ -30,9 +30,9 @@ describe('Handling orphaned cycles in LdhopEngine', () => {
         new NamedNode(resource),
       ),
     )
-    engine.addGraph(resource, [...personWithoutConnection] as Quad[])
-    const personsAfter = engine.getVariable(Var.person)
-    expect(engine.moves.list.size).to.be.lessThan(moveSizeBefore)
+    qas.addResource(resource, [...personWithoutConnection] as Quad[])
+    const personsAfter = qas.getVariable('person')
+    expect(qas.moves.list.size).to.be.lessThan(moveSizeBefore)
     expect(personsAfter).to.have.length(3)
   })
 })

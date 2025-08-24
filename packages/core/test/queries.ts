@@ -1,5 +1,6 @@
 import * as n3 from 'n3'
 import {
+  as,
   dct,
   foaf,
   ldp,
@@ -10,48 +11,134 @@ import {
   space,
   vcard,
 } from 'rdf-namespaces'
-import type { RdfQuery } from '../src/index.js'
+import type { LdhopQuery, RdfQuery, Variable } from '../src/index.js'
 import { getContainer } from '../src/utils/helpers.js'
-import { as, hospex, meeting, wf } from './rdf-namespaces.js'
+import { hospex, meeting, wf } from './rdf-namespaces.js'
 
-export const personAccommodationsQuery: RdfQuery = [
+export enum Var {
+  person = '?person',
+  publicTypeIndex = '?publicTypeIndex',
+  privateTypeIndex = '?privateTypeIndex',
+  preferencesFile = '?preferencesFile',
+  typeRegistration = '?typeRegistration',
+  typeRegistrationForHospex = '?typeRegistrationForHospex',
+  hospexDocument = '?hospexDocument',
+  hospexDocumentForCommunity = '?hospexDocumentForCommunity',
+  community = '?community',
+  offer = '?offer',
+  group = '?group',
+  profileDocument = '?profileDocument',
+  inbox = '?inbox',
+  notification = '?notification',
+  message = '?message',
+  chat = '?chat',
+  otherChat = '?otherChat',
+  addNotification = '?addNotification',
+  longChatNotification = '?longChatNotification',
+  typeRegistrationForChat = '?typeRegistrationForChat',
+  participation = '?participation',
+  chatWithOtherPersonParticipation = '?chatWithOtherPersonParticipation',
+  otherPerson = '?otherPerson',
+  otherPersonParticipation = '?otherPersonParticipation',
+  day = '?day',
+  month = '?month',
+  year = '?year',
+  participant = '?participant',
+  chatWithOtherPerson = '?chatWithOtherPerson',
+  chatContainer = '?chatContainer',
+  messageDoc = '?messageDoc',
+}
+
+Object.values(Var) satisfies Variable[]
+
+export const personAccommodationsQuery: LdhopQuery<Var> = [
   {
     type: 'match',
-    subject: '?person',
+    subject: Var.person,
     predicate: solid.publicTypeIndex,
     pick: 'object',
-    target: '?publicTypeIndex',
+    target: Var.publicTypeIndex,
   },
   {
     type: 'match',
-    subject: '?publicTypeIndex',
+    subject: Var.publicTypeIndex,
     predicate: dct.references,
     pick: 'object',
-    target: '?typeRegistration',
+    target: Var.typeRegistration,
   },
   {
     type: 'match',
-    subject: '?typeRegistration',
+    subject: Var.typeRegistration,
     predicate: solid.forClass,
     object: hospex.PersonalHospexDocument,
     pick: 'subject',
-    target: '?typeRegistrationForHospex',
+    target: Var.typeRegistrationForHospex,
   },
   {
     type: 'match',
-    subject: '?typeRegistrationForHospex',
+    subject: Var.typeRegistrationForHospex,
     predicate: solid.instance,
     pick: 'object',
-    target: `?hospexDocument`,
+    target: Var.hospexDocument,
   },
-  { type: 'add resources', variable: '?hospexDocument' },
+  { type: 'add resources', variable: Var.hospexDocument },
   {
     type: 'match',
-    subject: '?person',
+    subject: Var.person,
     predicate: sioc.member_of,
-    object: '?community',
+    object: Var.community,
     pick: 'graph',
-    target: '?hospexDocumentForCommunity',
+    target: Var.hospexDocumentForCommunity,
+  },
+  {
+    type: 'match',
+    subject: Var.person,
+    predicate: hospex.offers,
+    graph: Var.hospexDocumentForCommunity,
+    pick: 'object',
+    target: Var.offer,
+  },
+  { type: 'add resources', variable: Var.offer },
+]
+
+export const personAccommodationsQuery2: RdfQuery<Var> = [
+  {
+    type: 'match',
+    subject: Var.person,
+    predicate: solid.publicTypeIndex,
+    pick: 'object',
+    target: Var.publicTypeIndex,
+  },
+  {
+    type: 'match',
+    subject: Var.publicTypeIndex,
+    predicate: dct.references,
+    pick: 'object',
+    target: Var.typeRegistration,
+  },
+  {
+    type: 'match',
+    subject: Var.typeRegistration,
+    predicate: solid.forClass,
+    object: hospex.PersonalHospexDocument,
+    pick: 'subject',
+    target: Var.typeRegistrationForHospex,
+  },
+  {
+    type: 'match',
+    subject: Var.typeRegistrationForHospex,
+    predicate: solid.instance,
+    pick: 'object',
+    target: Var.hospexDocument,
+  },
+  { type: 'add resources', variable: Var.hospexDocument },
+  {
+    type: 'match',
+    subject: Var.person,
+    predicate: sioc.member_of,
+    object: Var.community,
+    pick: 'graph',
+    target: Var.hospexDocumentForCommunity,
   },
   // remove all hospex documents that don't belong to this community
   qas => {
@@ -72,230 +159,214 @@ export const personAccommodationsQuery: RdfQuery = [
   },
   {
     type: 'match',
-    subject: '?person',
+    subject: Var.person,
     predicate: hospex.offers,
     pick: 'object',
-    target: '?offer',
+    target: Var.offer,
   },
-  { type: 'add resources', variable: '?offer' },
+  { type: 'add resources', variable: Var.offer },
 ]
 
-export const communityAccommodationsQuery: RdfQuery = [
+export const communityAccommodationsQuery: LdhopQuery<Var> = [
   {
     type: 'match',
-    subject: '?community',
+    subject: Var.community,
     predicate: sioc.has_usergroup,
     pick: 'object',
-    target: '?group',
+    target: Var.group,
   },
   {
     type: 'match',
-    subject: '?group',
+    subject: Var.group,
     predicate: vcard.hasMember,
     pick: 'object',
-    target: '?person',
+    target: Var.person,
   },
   ...personAccommodationsQuery,
 ]
 
-export const friendOfAFriendQuery: RdfQuery = [
+export const friendOfAFriendQuery: LdhopQuery<Var> = [
   {
     type: 'match',
-    subject: '?person',
+    subject: Var.person,
     predicate: foaf.knows,
     pick: 'object',
-    target: '?person',
+    target: Var.person,
   },
 ]
 
-const personAccommodationQuery2 = [...personAccommodationsQuery].filter(
-  step => typeof step !== 'function',
-)
-const offerIndex = personAccommodationQuery2.findIndex(
-  step => 'target' in step && step.target === '?offer',
-)
-personAccommodationQuery2[offerIndex] = {
-  type: 'match',
-  subject: '?person',
-  predicate: 'http://w3id.org/hospex/ns#offers',
-  graph: '?hospexDocumentForCommunity',
-  pick: 'object',
-  target: '?offer',
-}
-export { personAccommodationQuery2 }
-
-export const inboxMessagesQuery: RdfQuery = [
+export const inboxMessagesQuery: LdhopQuery<Var> = [
   {
     type: 'match',
-    subject: '?person',
+    subject: Var.person,
     predicate: rdfs.seeAlso, // TODO also include foaf.isPrimaryTopicOf
     pick: 'object',
-    target: '?profileDocument',
+    target: Var.profileDocument,
   },
   // fetch the profile documents
-  { type: 'add resources', variable: '?profileDocument' },
+  { type: 'add resources', variable: Var.profileDocument },
   {
     type: 'match',
-    subject: '?person',
+    subject: Var.person,
     predicate: ldp.inbox,
     pick: 'object',
-    target: '?inbox',
+    target: Var.inbox,
   },
   {
     type: 'match',
-    subject: '?inbox',
+    subject: Var.inbox,
     predicate: ldp.contains,
     pick: 'object',
-    target: '?notification',
+    target: Var.notification,
   },
   {
     type: 'match',
-    subject: '?notification',
+    subject: Var.notification,
     predicate: rdf.type,
     object: as.Add,
     pick: 'subject',
-    target: '?addNotification',
+    target: Var.addNotification,
   },
   {
     type: 'match',
-    subject: '?addNotification',
+    subject: Var.addNotification,
     predicate: as.context,
     object: 'https://www.pod-chat.com/LongChatMessage',
     pick: 'subject',
-    target: '?longChatNotification',
+    target: Var.longChatNotification,
   },
   {
     type: 'match',
-    subject: '?longChatNotification',
+    subject: Var.longChatNotification,
     predicate: as.object,
     pick: 'object',
-    target: '?message',
+    target: Var.message,
   },
-  { type: 'add resources', variable: '?message' },
+  { type: 'add resources', variable: Var.message },
   {
     type: 'match',
-    subject: '?longChatNotification',
+    subject: Var.longChatNotification,
     predicate: as.target,
     pick: 'object',
-    target: '?chat',
+    target: Var.chat,
   },
-  { type: 'add resources', variable: '?chat' },
+  { type: 'add resources', variable: Var.chat },
 ]
 
-export const communityQuery: RdfQuery = [
+export const communityQuery: LdhopQuery<Var> = [
   {
     type: 'match',
-    subject: '?community',
+    subject: Var.community,
     predicate: sioc.has_usergroup,
     pick: 'object',
-    target: '?group',
+    target: Var.group,
   },
   {
     type: 'match',
-    subject: '?group',
+    subject: Var.group,
     predicate: vcard.hasMember,
     pick: 'object',
-    target: '?person',
+    target: Var.person,
   },
 ]
 
-export const chatsWithPerson: RdfQuery = [
+export const chatsWithPerson: LdhopQuery<Var> = [
   {
     type: 'match',
-    subject: '?person',
+    subject: Var.person,
     predicate: rdfs.seeAlso, // TODO also include foaf.isPrimaryTopicOf
     pick: 'object',
-    target: '?profileDocument',
+    target: Var.profileDocument,
   },
   // fetch the profile documents
-  { type: 'add resources', variable: '?profileDocument' },
+  { type: 'add resources', variable: Var.profileDocument },
   {
     type: 'match',
-    subject: '?person',
+    subject: Var.person,
     predicate: space.preferencesFile,
     pick: 'object',
-    target: '?preferencesFile',
+    target: Var.preferencesFile,
   },
-  { type: 'add resources', variable: '?preferencesFile' },
+  { type: 'add resources', variable: Var.preferencesFile },
   // find and fetch private type index
   {
     type: 'match',
-    subject: '?person',
+    subject: Var.person,
     predicate: solid.privateTypeIndex,
     pick: 'object',
-    target: '?privateTypeIndex',
+    target: Var.privateTypeIndex,
   },
   {
     type: 'match',
-    subject: '?privateTypeIndex',
+    subject: Var.privateTypeIndex,
     predicate: dct.references,
     pick: 'object',
-    target: '?typeRegistration',
+    target: Var.typeRegistration,
   },
   {
     type: 'match',
-    subject: '?typeRegistration',
+    subject: Var.typeRegistration,
     predicate: solid.forClass,
     object: meeting.LongChat,
     pick: 'subject',
-    target: '?typeRegistrationForChat',
+    target: Var.typeRegistrationForChat,
   },
   {
     type: 'match',
-    subject: '?typeRegistrationForChat',
+    subject: Var.typeRegistrationForChat,
     predicate: solid.instance,
     pick: 'object',
-    target: `?chat`,
+    target: Var.chat,
   },
   {
     type: 'match',
-    subject: '?chat',
+    subject: Var.chat,
     predicate: wf.participation,
     pick: 'object',
-    target: '?participation',
+    target: Var.participation,
   },
   {
     type: 'match',
-    subject: '?participation',
+    subject: Var.participation,
     predicate: wf.participant,
     pick: 'object',
-    target: '?participant',
+    target: Var.participant,
   },
   {
     type: 'match',
-    subject: '?participation',
+    subject: Var.participation,
     predicate: wf.participant,
-    object: '?otherPerson',
+    object: Var.otherPerson,
     pick: 'subject',
-    target: '?otherPersonParticipation',
+    target: Var.otherPersonParticipation,
   },
   {
     type: 'match',
-    subject: '?chat',
+    subject: Var.chat,
     predicate: wf.participation,
-    object: '?otherPersonParticipation',
+    object: Var.otherPersonParticipation,
     pick: 'subject',
-    target: '?chatWithOtherPerson',
+    target: Var.chatWithOtherPerson,
   },
   {
     type: 'match',
-    subject: '?chatWithOtherPerson',
+    subject: Var.chatWithOtherPerson,
     predicate: wf.participation,
     pick: 'object',
-    target: '?chatWithOtherPersonParticipation',
+    target: Var.chatWithOtherPersonParticipation,
   },
   {
     type: 'match',
-    subject: '?chatWithOtherPersonParticipation',
+    subject: Var.chatWithOtherPersonParticipation,
     predicate: dct.references,
     pick: 'object',
-    target: '?otherChat',
+    target: Var.otherChat,
   },
   // generate chat container
   {
     type: 'transform variable',
-    source: '?chatWithOtherPerson',
-    target: '?chatContainer',
+    source: Var.chatWithOtherPerson,
+    target: Var.chatContainer,
     transform: term =>
       term.termType === 'NamedNode'
         ? new n3.NamedNode(getContainer(term.value))
@@ -303,8 +374,8 @@ export const chatsWithPerson: RdfQuery = [
   },
   {
     type: 'transform variable',
-    source: '?otherChat',
-    target: '?chatContainer',
+    source: Var.otherChat,
+    target: Var.chatContainer,
     transform: term =>
       term.termType === 'NamedNode'
         ? new n3.NamedNode(getContainer(term.value))
@@ -312,45 +383,45 @@ export const chatsWithPerson: RdfQuery = [
   },
   {
     type: 'match',
-    subject: '?chatContainer',
+    subject: Var.chatContainer,
     predicate: ldp.contains,
     pick: 'object',
-    target: '?year',
+    target: Var.year,
   },
   {
     type: 'match',
-    subject: '?year',
+    subject: Var.year,
     predicate: ldp.contains,
     pick: 'object',
-    target: '?month',
+    target: Var.month,
   },
   {
     type: 'match',
-    subject: '?month',
+    subject: Var.month,
     predicate: ldp.contains,
     pick: 'object',
-    target: '?day',
+    target: Var.day,
   },
   {
     type: 'match',
-    subject: '?day',
+    subject: Var.day,
     predicate: ldp.contains,
     pick: 'object',
-    target: '?messageDoc',
+    target: Var.messageDoc,
   },
-  { type: 'add resources', variable: '?messageDoc' },
+  { type: 'add resources', variable: Var.messageDoc },
   {
     type: 'match',
-    subject: '?chat',
+    subject: Var.chat,
     predicate: wf.message,
     pick: 'object',
-    target: '?message',
+    target: Var.message,
   },
   {
     type: 'match',
-    subject: '?otherChat',
+    subject: Var.otherChat,
     predicate: wf.message,
     pick: 'object',
-    target: '?message',
+    target: Var.message,
   },
 ]

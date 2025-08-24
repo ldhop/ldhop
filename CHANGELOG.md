@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **core** - Implement new `LdhopEngine` API.
+- **core** - Detect and remove orphaned cycles.
+- **core** - Track resource redirects in graph management
+
+### Deprecated
+
+- **core** - `QueryAndStore` is deprecated in favor of `LdhopEngine` (will be removed in version 1.0).
+- **core** - Type `RdfQuery` is deprecated in favor of `LdhopQuery`.
+
 ## [0.1.1] - 2025-02-19
 
 ### Fixed
