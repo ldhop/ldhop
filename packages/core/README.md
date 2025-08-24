@@ -15,42 +15,46 @@ yarn add @ldhop/core
 import {
   LdhopEngine,
   type LdhopQuery,
+  type Variable,
   fetchRdfDocument,
   run,
 } from '@ldhop/core'
 import { foaf, rdfs } from 'rdf-namespaces'
 
-enum Variable {
+// to prevent typos and keep the query clean, it's recommended to specify the variables explicitly.
+enum Var {
   person = '?person',
   extendedProfile = '?extendedProfile',
 }
 
+Object.values(Var) satisfies Variable[]
+
 // specify the steps of the query
 // in this case fetch the whole foaf social network
 // and also look in extended profile documents
-const friendOfAFriendQuery: LdhopQuery<Variable> = [
+const friendOfAFriendQuery: LdhopQuery<Var> = [
   {
     type: 'match',
-    subject: Variable.person,
+    subject: Var.person,
     predicate: foaf.knows,
     pick: 'object',
-    target: Variable.person,
+    target: Var.person,
   },
   {
     type: 'match',
-    subject: Variable.person,
+    subject: Var.person,
     predicate: rdfs.seeAlso,
     pick: 'object',
-    target: Variable.extendedProfile,
+    target: Var.extendedProfile,
   },
   {
     type: 'add resources',
-    variable: Variable.extendedProfile,
+    variable: Var.extendedProfile,
   },
 ]
 
 // specify starting points
-const initialVariables = { [Variable.person]: new Set([webId]) }
+const initialVariables = { [Var.person]: new Set([webId]) }
 
 // initialize the engine
 const engine = new LdhopEngine(friendOfAFriendQuery, initialVariables)
@@ -74,7 +78,7 @@ if (missingResources.size > 0) {
 const store = engine.store
 
 // you can access specific variables
-engine.getVariable(Variable.person)
+engine.getVariable(Var.person)
 // or all variables
 engine.getAllVariables()
 ```
@@ -89,10 +93,10 @@ The following steps are supported:
 
 ```ts
 // step through the graph
-// type Variable = `?${string}`
-// type Constant = // usually URI, a string starting with some sensible characters
+// type Variable extends `?${string}`
+// type Constant is usually an URI, a string starting with some sensible characters (not '?')
 
-type Match = {
+type Match<Variable> = {
   type: 'match'
   // optional constraints, either URI, or variable starting with ?
   subject?: Variable | Constant
@@ -108,7 +112,7 @@ type Match = {
 
 ```ts
 // fetch documents behind variable, even if it isn't needed for next steps
-type AddResources = {
+type AddResources<Variable> = {
   type: 'add resources'
   variable: Variable // variable to fetch
 }
@@ -116,7 +120,7 @@ type AddResources = {
 
 ```ts
 // change variable, for example get container of a resource
-type TransformVariable = {
+type TransformVariable<Variable> = {
   type: 'transform variable'
   source: Variable
   target: Variable
@@ -134,10 +138,10 @@ Filtering can be achieved using `match` step, and assigning the result to a new 
 See [Solid WebID Profile specification](https://solid.github.io/webid-profile/#discovery) for context.
 
 ```ts
-import type { LdhopQuery } from '@ldhop/core'
+import type { LdhopQuery, Variable } from '@ldhop/core'
 import { pim, rdfs, solid, ldp } from 'rdf-namespaces'
 
-enum Variable {
+enum Var {
   person = '?person',
   preferencesFile = '?preferencesFile',
   profileDocument = '?profileDocument',
@@ -146,50 +150,52 @@ enum Variable {
   inbox = '?inbox',
 }
 
+Object.values(Var) satisfies Variable[]
+
 // find person and their profile documents
-const webIdProfileQuery: LdhopQuery<Variable> = [
+const webIdProfileQuery: LdhopQuery<Var> = [
   // find and fetch preferences file
   {
     type: 'match',
-    subject: Variable.person,
+    subject: Var.person,
     predicate: pim.preferencesFile,
     pick: 'object',
-    target: Variable.preferencesFile,
+    target: Var.preferencesFile,
   },
-  { type: 'add resources', variable: Variable.preferencesFile },
+  { type: 'add resources', variable: Var.preferencesFile },
   // find extended profile documents
   {
     type: 'match',
-    subject: Variable.person,
+    subject: Var.person,
     predicate: rdfs.seeAlso,
     pick: 'object',
-    target: Variable.profileDocument,
+    target: Var.profileDocument,
   },
   // fetch the extended profile documents
-  { type: 'add resources', variable: Variable.profileDocument },
+  { type: 'add resources', variable: Var.profileDocument },
   // find public type index
   {
     type: 'match',
-    subject: Variable.person,
+    subject: Var.person,
     predicate: solid.publicTypeIndex,
     pick: 'object',
-    target: Variable.publicTypeIndex,
+    target: Var.publicTypeIndex,
   },
   // find private type index
   {
     type: 'match',
-    subject: Variable.person,
+    subject: Var.person,
     predicate: solid.privateTypeIndex,
     pick: 'object',
-    target: Variable.privateTypeIndex,
+    target: Var.privateTypeIndex,
   },
   // find inbox
   {
     type: 'match',
-    subject: Variable.person,
+    subject: Var.person,
     predicate: ldp.inbox,
     pick: 'object',
-    target: Variable.inbox,
+    target: Var.inbox,
   },
 ]
 ```

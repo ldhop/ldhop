@@ -11,7 +11,7 @@ import {
   space,
   vcard,
 } from 'rdf-namespaces'
-import type { LdhopQuery, RdfQuery } from '../src/index.js'
+import type { LdhopQuery, RdfQuery, Variable } from '../src/index.js'
 import { getContainer } from '../src/utils/helpers.js'
 import { hospex, meeting, wf } from './rdf-namespaces.js'
 
@@ -48,6 +48,8 @@ export enum Var {
   chatContainer = '?chatContainer',
   messageDoc = '?messageDoc',
 }
+
+Object.values(Var) satisfies Variable[]
 
 export const personAccommodationsQuery: LdhopQuery<Var> = [
   {

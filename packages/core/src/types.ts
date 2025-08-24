@@ -5,6 +5,9 @@ export type Variable = `?${string}`
 
 export type Constant = '' | `${Letter | UpperLetter | Digit | Special}${string}`
 
+/**
+ * @deprecated will be removed in version 1.0
+ */
 export type TransformStore<V extends Variable> = (qas: QueryAndStore<V>) => void
 
 export type Match<V extends Variable> = {
