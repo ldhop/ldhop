@@ -3,6 +3,7 @@ export { LdhopEngine } from './LdhopEngine.js'
 export { QueryAndStore } from './QueryAndStore.js'
 export {
   fetchRdfDocument,
+  parseRdfToQuads as parseRdf,
   run,
   type FetchRdfReturnType,
 } from './utils/helpers.js'

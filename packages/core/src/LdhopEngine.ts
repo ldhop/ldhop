@@ -122,6 +122,14 @@ class Moves<V extends Variable> {
   }
 }
 
+interface EngineCallbacks<V extends Variable> {
+  onNeedResource?: (uri: string) => void
+  onDropResource?: (uri: string) => void
+  onQueryComplete?: () => void
+  onVariableAdded?: (variable: V, value: Term, all: Set<Term>) => void
+  onVariableRemoved?: (variable: V, value: Term, all: Set<Term>) => void
+}
+
 /**
  * The engine to execute LdhopQuery.
  *
@@ -197,7 +205,14 @@ export class LdhopEngine<V extends Variable = Variable> {
     query: LdhopQuery<V>,
     startingPoints: UriVariables<V>,
     store = new Store(),
+    callbacks: EngineCallbacks<V> = {},
   ) {
+    this.onNeedResource = callbacks.onNeedResource
+    this.onDropResource = callbacks.onDropResource
+    this.onQueryComplete = callbacks.onQueryComplete
+    this.onVariableAdded = callbacks.onVariableAdded
+    this.onVariableRemoved = callbacks.onVariableRemoved
+
     this.store = store
     this.query = query
 
@@ -223,6 +238,12 @@ export class LdhopEngine<V extends Variable = Variable> {
   getMissingResources() {
     return this.getGraphs(false)
   }
+
+  onNeedResource?: (uri: Uri) => void
+  onDropResource?: (uri: Uri) => void
+  onQueryComplete?: () => void
+  onVariableAdded?: (variable: V, value: Term, all: Set<Term>) => void
+  onVariableRemoved?: (variable: V, value: Term, all: Set<Term>) => void
 
   addGraph(actualUri: string, quads: Quad[], requestedUri?: string) {
     const actualGraphUri = removeHashFromURI(actualUri)
@@ -263,10 +284,10 @@ export class LdhopEngine<V extends Variable = Variable> {
     graph.added = true
     this.graphs.set(actualGraphUri, graph)
 
-    return {
-      missing: this.getMissingResources(),
-      notNeeded: 'TODO',
-    }
+    const missing = this.getMissingResources()
+    if (missing.size === 0) this.onQueryComplete?.()
+
+    return { missing, notNeeded: 'TODO' }
   }
 
   private isVariablePresent(variable: V, node: Term) {
@@ -423,6 +444,9 @@ export class LdhopEngine<V extends Variable = Variable> {
   private removeVariable(variable: V, node: Term) {
     // remove variable value from variables
     this.variables.get(variable)?.delete(getTermId(node))
+
+    this.onVariableRemoved?.(variable, node, this.getVariable(variable))
+
     if (this.variables.get(variable)?.size === 0)
       this.variables.delete(variable)
 
@@ -458,9 +482,17 @@ export class LdhopEngine<V extends Variable = Variable> {
     const redirectsFrom = graph?.redirectsFrom ?? new Set()
     const redirectTo = graph?.redirectTo
 
+    this.onDropResource?.(graphUri)
     this.graphs.delete(graphUri)
-    for (const sourceUri of redirectsFrom) this.graphs.delete(sourceUri)
-    if (redirectTo) this.graphs.delete(redirectTo)
+
+    for (const sourceUri of redirectsFrom) {
+      this.onDropResource?.(sourceUri)
+      this.graphs.delete(sourceUri)
+    }
+    if (redirectTo) {
+      this.onDropResource?.(redirectTo)
+      this.graphs.delete(redirectTo)
+    }
 
     const quads = this.store.getQuads(null, null, null, new NamedNode(uri))
 
@@ -558,7 +590,7 @@ export class LdhopEngine<V extends Variable = Variable> {
       // and if not, add it
       const graphName = removeHashFromURI(node.value)
 
-      if (!this.graphs.has(graphName))
+      if (!this.graphs.has(graphName)) {
         this.graphs.set(graphName, {
           added: false,
           uri: graphName,
@@ -566,6 +598,8 @@ export class LdhopEngine<V extends Variable = Variable> {
           sourceVariables: new Map(),
           redirectsFrom: new Set(),
         })
+        this.onNeedResource?.(graphName)
+      }
 
       const graph = this.graphs.get(graphName)!
 
@@ -575,6 +609,8 @@ export class LdhopEngine<V extends Variable = Variable> {
 
       graph.sourceVariables.get(variable)!.set(getTermId(node), node)
     }
+
+    this.onVariableAdded?.(variable, node, this.getVariable(variable))
 
     this.hopFromVariable(variable, node)
   }

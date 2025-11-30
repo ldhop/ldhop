@@ -35,9 +35,11 @@
     "@types/chai": "^4.3.11",
     "@types/mocha": "^10.0.4",
     "@types/node": "^20.11.28",
+    "@types/sinon": "^21.0.0",
     "chai": "^4.3.10",
     "mocha": "^10.2.0",
     "rdf-namespaces": "^1.15.0",
+    "sinon": "^21.0.0",
     "ts-node": "^10.9.1",
     "tsx": "^4.7.1"
   },

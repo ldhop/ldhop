@@ -83,6 +83,33 @@ engine.getVariable(Var.person)
 engine.getAllVariables()
 ```
 
+### Callbacks
+
+You can also pass callbacks to `LdhopEngine` as 4th argument. This can be an alternative approach to query execution (even a preferable one).
+
+```ts
+const engine = new LdhopEngine(
+  friendOfAFriendQuery,
+  initialVariables,
+  undefined,
+  {
+    onNeedResource: (uri: string) => {},
+    onDropResource: (uri: string) => {},
+    onQueryComplete: () => {},
+    onVariableAdded: (
+      variable: Variable,
+      term: n3.Term,
+      variables: Set<n3.Term>,
+    ) => {},
+    onVariableRemoved: (
+      variable: Variable,
+      term: n3.Term,
+      variables: Set<n3.Term>,
+    ) => {},
+  },
+)
+```
+
 ## Query
 
 Query is an array of instructions to follow in order to discover and fetch desired Linked data.

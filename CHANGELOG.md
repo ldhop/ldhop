@@ -9,9 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **core** - Implement `LdhopEngine` [callbacks](./packages/core/README.md#callbacks).
+
+## [1.0.0-alpha.0] - 2025-08-24
+
+### Added
+
 - **core** - Implement new `LdhopEngine` API.
 - **core** - Detect and remove orphaned cycles.
-- **core** - Track resource redirects in graph management
+- **core** - Track resource redirects in graph management.
 
 ### Deprecated
 
