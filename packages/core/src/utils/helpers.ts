@@ -76,7 +76,7 @@ export const fetchRdfDocument = async (uri: URI, fetch: Fetch) => {
     statusCode = response.status
     rawData = await response.text()
     data = parseRdfToQuads(rawData, {
-      baseIRI: doc,
+      baseIRI: response.url,
       format: response.headers.get('content-type') ?? undefined,
     })
 
