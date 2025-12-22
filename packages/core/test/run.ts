@@ -8,6 +8,7 @@ const __dirname = process.cwd()
 
 const staticFetch = (async (uri: string) => {
   const url = new URL(uri)
+  url.hash = ''
 
   const filename = join(
     __dirname,
@@ -21,6 +22,7 @@ const staticFetch = (async (uri: string) => {
     text: async () => data,
     status: 200,
     headers: new Headers(),
+    url: url.toString(),
   }
 }) as Fetch
 
