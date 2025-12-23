@@ -1,5 +1,5 @@
 /* eslint-disable import/no-unused-modules */
-import { RdfQuery } from '@ldhop/core'
+import { LdhopQuery } from '@ldhop/core'
 import { NamedNode } from 'n3'
 import { foaf } from 'rdf-namespaces'
 
@@ -17,7 +17,7 @@ export {
 export { inboxMessagesQuery, messages, threads } from './messages'
 export { profileDocuments, webIdProfileQuery } from './profile'
 
-export const friendOfAFriendQuery: RdfQuery = [
+export const friendOfAFriendQuery: LdhopQuery<'?person'> = [
   {
     type: 'match',
     subject: '?person',
@@ -27,7 +27,9 @@ export const friendOfAFriendQuery: RdfQuery = [
   },
 ]
 
-export const friendOfAFriendQuerySolidCommunityFix: RdfQuery = [
+export const friendOfAFriendQuerySolidCommunityFix: LdhopQuery<
+  '?person' | '?personNext'
+> = [
   {
     type: 'match',
     subject: '?person',

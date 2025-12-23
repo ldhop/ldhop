@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **core** - Export additional types.
+- **core** - Add `onQuadsChanged` callback to LdhopEngine.
+- **react** - Implement `useLdhopQuery` hook.
+
+### Deprecated
+
+- **react** - `useLDhopQuery` is deprecated in favour of `useLdhopQuery` and will be removed in version 1.0.
+
+## [1.0.0-alpha.2] - 2025-12-21
+
+### Fixed
+
+- **core** - Use response url as baseIRI in fetchRdfDocument, to handle relative IRIs correctly when there is a redirect.
+
 ## [1.0.0-alpha.1] - 2025-11-30
 
 ### Added

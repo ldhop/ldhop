@@ -18,6 +18,7 @@ export const App = () => {
     <div className={styles.test}>
       <header>
         <Link to="/">Home</Link> <Link to="/example">Example</Link>{' '}
+        <Link to="/example-legacy">Legacy</Link>{' '}
         {!info ? (
           '...'
         ) : info.isLoggedIn ? (

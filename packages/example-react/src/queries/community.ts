@@ -1,7 +1,7 @@
-import type { RdfQuery } from '@ldhop/core'
+import type { LdhopQuery, QueryVariables } from '@ldhop/core'
 import { sioc, vcard } from 'rdf-namespaces'
 
-export const readCommunityQuery: RdfQuery = [
+export const readCommunityQuery: LdhopQuery<'?community' | '?group'> = [
   {
     type: 'match',
     subject: '?community',
@@ -11,7 +11,9 @@ export const readCommunityQuery: RdfQuery = [
   },
 ]
 
-export const readCommunityMembersQuery: RdfQuery = [
+export const readCommunityMembersQuery: LdhopQuery<
+  QueryVariables<typeof readCommunityQuery> | '?person'
+> = [
   ...readCommunityQuery,
   {
     type: 'match',

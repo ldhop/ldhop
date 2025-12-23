@@ -1,8 +1,14 @@
 import { NamedNode, Quad, Store, type Term } from 'n3'
-import type { LdhopQuery, Match, Variable } from './types.js'
+import type {
+  LdhopQuery,
+  Match,
+  UriVariables,
+  Variable,
+  VariableMap,
+} from './types.js'
 import { removeHashFromURI } from './utils/helpers.js'
 
-type TermId = `${Term['termType']}:${Term['id']}`
+export type TermId = `${Term['termType']}:${Term['id']}`
 
 type Uri = string
 interface Graph<V extends Variable> {
@@ -13,9 +19,6 @@ interface Graph<V extends Variable> {
   redirectsFrom: Set<Uri>
   redirectTo?: Uri
 }
-type UriVariables<V extends Variable> = Partial<{ [key in V]: Set<string> }>
-type VariableMap<V extends Variable, Value = Term> = Map<V, Map<TermId, Value>>
-
 interface Move<V extends Variable> {
   from: VariableMap<V, Term>
   to: VariableMap<V, Term>
@@ -125,6 +128,7 @@ class Moves<V extends Variable> {
 interface EngineCallbacks<V extends Variable> {
   onNeedResource?: (uri: string) => void
   onDropResource?: (uri: string) => void
+  onQuadsChanged?: () => void
   onQueryComplete?: () => void
   onVariableAdded?: (variable: V, value: Term, all: Set<Term>) => void
   onVariableRemoved?: (variable: V, value: Term, all: Set<Term>) => void
@@ -209,6 +213,7 @@ export class LdhopEngine<V extends Variable = Variable> {
   ) {
     this.onNeedResource = callbacks.onNeedResource
     this.onDropResource = callbacks.onDropResource
+    this.onQuadsChanged = callbacks.onQuadsChanged
     this.onQueryComplete = callbacks.onQueryComplete
     this.onVariableAdded = callbacks.onVariableAdded
     this.onVariableRemoved = callbacks.onVariableRemoved
@@ -222,17 +227,24 @@ export class LdhopEngine<V extends Variable = Variable> {
     for (const key in startingPoints) {
       if (isVariable<V>(key) && startingPoints[key]) {
         for (const value of startingPoints[key]) {
-          const term = new NamedNode(value)
+          try {
+            new URL(value)
+            const term = new NamedNode(value)
 
-          this.moves.add({
-            step: -1,
-            from: new Map() as VariableMap<V>,
-            to: new Map([[key, new Map([[getTermId(term), term]])]]),
-          })
-          this.addVariable(key, term)
+            this.moves.add({
+              step: -1,
+              from: new Map() as VariableMap<V>,
+              to: new Map([[key, new Map([[getTermId(term), term]])]]),
+            })
+            this.addVariable(key, term)
+          } catch {
+            // empty
+          }
         }
       }
     }
+
+    if (this.getMissingResources().size === 0) this.onQueryComplete?.()
   }
 
   getMissingResources() {
@@ -241,6 +253,7 @@ export class LdhopEngine<V extends Variable = Variable> {
 
   onNeedResource?: (uri: Uri) => void
   onDropResource?: (uri: Uri) => void
+  onQuadsChanged?: () => void
   onQueryComplete?: () => void
   onVariableAdded?: (variable: V, value: Term, all: Set<Term>) => void
   onVariableRemoved?: (variable: V, value: Term, all: Set<Term>) => void
@@ -280,6 +293,8 @@ export class LdhopEngine<V extends Variable = Variable> {
     // For each quad to remove, (Remove the quad).
     deletions.forEach(quad => this.removeQuad(quad))
 
+    if (additions.length + deletions.length > 0) this.onQuadsChanged?.()
+
     // mark the graph as added or add it
     graph.added = true
     this.graphs.set(actualGraphUri, graph)
@@ -287,7 +302,7 @@ export class LdhopEngine<V extends Variable = Variable> {
     const missing = this.getMissingResources()
     if (missing.size === 0) this.onQueryComplete?.()
 
-    return { missing, notNeeded: 'TODO' }
+    return { missing, notNeeded: 'TODO', added: true }
   }
 
   private isVariablePresent(variable: V, node: Term) {
@@ -495,8 +510,9 @@ export class LdhopEngine<V extends Variable = Variable> {
     }
 
     const quads = this.store.getQuads(null, null, null, new NamedNode(uri))
-
+    const isChange = quads.length > 0
     quads.forEach(q => this.removeQuad(q))
+    if (isChange) this.onQuadsChanged?.()
   }
 
   private hopFromVariable(variable: V, node: Term) {
@@ -631,7 +647,7 @@ export class LdhopEngine<V extends Variable = Variable> {
       this.variables
         .entries()
         .map(([key, value]) => [key, new Set(value.values())]),
-    )
+    ) as Partial<{ [key in V]: Set<Term> }>
   }
 
   getAllVariablesAsStringSets() {
@@ -642,7 +658,7 @@ export class LdhopEngine<V extends Variable = Variable> {
           key,
           termSetToStringSet(new Set(value.values())),
         ]),
-    )
+    ) as Partial<{ [key in V]: Set<string> }>
   }
 
   public getGraphs(added?: boolean) {

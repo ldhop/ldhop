@@ -35,6 +35,7 @@ rules:
       ignoreExports:
         - packages/example-react/vite.config.ts
         - packages/core/src/index.ts
+        - packages/react/src/index.ts
 
 parser: '@typescript-eslint/parser'
 parserOptions:
