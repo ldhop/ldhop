@@ -46,6 +46,9 @@ export const useLdhopQuery = <
   const [isLoading, setIsLoading] = useState(true)
   const [isFetching, setIsFetching] = useState(true)
 
+  // added resources with their hashed values
+  const resourceRef = useRef<Map<string, string>>(new Map())
+
   const engineRef = useRef<LdhopEngine<V> | null>(null)
   useEffect(() => {
     setIsLoading(true)
@@ -53,6 +56,7 @@ export const useLdhopQuery = <
     setResources([])
     setOutputStore(store)
     setOutputQuads([])
+    resourceRef.current = new Map()
     engineRef.current = new LdhopEngine(query, variables, store, {
       onNeedResource: uri => {
         setIsLoading(true)
@@ -66,6 +70,7 @@ export const useLdhopQuery = <
             ? resources.filter(resource => resource !== uri)
             : resources,
         )
+        resourceRef.current?.delete(uri)
       },
       onVariableAdded(this: LdhopEngine<V>) {
         const ov = this.getAllVariables()
@@ -112,16 +117,23 @@ export const useLdhopQuery = <
   useEffect(() => {
     const graphs = engineRef.current?.getGraphs() ?? new Set()
     results.forEach((result, i) => {
+      const resource = resources[i]
       // if the resource is not needed, don't add it
-      if (!graphs.has(resources[i])) return
+      if (!graphs.has(resource)) return
       if (result.isSuccess) {
+        // if the exact same graph is already added, ignore
+        if (resourceRef.current?.get(resource) === result.data?.hash) return
         engineRef.current?.addGraph(
           result.data.response?.url ?? resources[i],
           result.data.data,
           resources[i],
         )
+        // remember the graph
+        resourceRef.current?.set(resource, result.data.hash)
       } else if (result.isError) {
+        if (resourceRef.current?.get(resource) === 'error') return
         engineRef.current?.addGraph(resources[i], [])
+        resourceRef.current?.set(resource, 'error')
       }
     })
 
