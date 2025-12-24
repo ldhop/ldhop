@@ -1,5 +1,6 @@
 import type { Term } from 'n3'
 import type { QueryAndStore } from './index.js'
+import type { TermId } from './LdhopEngine.js'
 
 export type Variable = `?${string}`
 
@@ -85,3 +86,15 @@ type Brackets = '(' | ')' | '[' | ']' | '{' | '}' | '<' | '>'
 type Quotes = "'" | '"' | '`'
 type Symbols = '~' | '^' | '|' | '\\'
 type Special = UrlSafe | Punctuation | Brackets | Quotes | Symbols
+
+export type UriVariables<V extends Variable> = Partial<{
+  [key in V]: Set<string>
+}>
+
+export type VariableMap<V extends Variable, Value = Term> = Map<
+  V,
+  Map<TermId, Value>
+>
+
+export type QueryVariables<T> =
+  T extends LdhopQuery<infer V extends Variable> ? V : never

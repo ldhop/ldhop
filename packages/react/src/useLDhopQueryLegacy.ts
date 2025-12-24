@@ -23,6 +23,9 @@ const areQuadsEqual = (q1: Quad[], q2: Quad[]) => {
   return q2.every(q => set1.has(q))
 }
 
+/**
+ * @deprecated Please use useLdhopQuery instead.
+ */
 export const useLDhopQuery = <AdditionalData extends object = object>({
   query,
   variables,

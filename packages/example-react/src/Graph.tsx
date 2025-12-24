@@ -46,8 +46,8 @@ export const Graph = ({
   nodes: { [id: string]: Set<string> }
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const width = 1200
-  const height = 900
+  const width = 300
+  const height = 300
   const simulationRef = useRef<Simulation<Node, Link>>()
   const nodesRef = useRef<Node[]>([])
   const linksRef = useRef<Link[]>([])

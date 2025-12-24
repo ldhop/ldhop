@@ -1,7 +1,7 @@
-import type { Match, RdfQuery, Variable } from '@ldhop/core'
+import type { LdhopQuery, Match, QueryVariables } from '@ldhop/core'
 import { ldp, rdfs, solid, space } from 'rdf-namespaces'
 
-export const personInbox: Match<Variable> = {
+export const personInbox: Match<'?person' | '?inbox'> = {
   type: 'match',
   subject: '?person',
   predicate: ldp.inbox,
@@ -9,7 +9,7 @@ export const personInbox: Match<Variable> = {
   target: '?inbox',
 }
 
-export const profileDocuments: RdfQuery = [
+export const profileDocuments: LdhopQuery<'?person' | '?profileDocument'> = [
   {
     type: 'match',
     subject: '?person',
@@ -21,7 +21,9 @@ export const profileDocuments: RdfQuery = [
   { type: 'add resources', variable: '?profileDocument' },
 ]
 
-export const publicWebIdProfileQuery: RdfQuery = [
+export const publicWebIdProfileQuery: LdhopQuery<
+  QueryVariables<typeof profileDocuments> | '?publicTypeIndex'
+> = [
   ...profileDocuments,
   // find public type index
   {
@@ -35,7 +37,12 @@ export const publicWebIdProfileQuery: RdfQuery = [
 
 // find person and their profile documents
 // https://solid.github.io/webid-profile/#discovery
-export const webIdProfileQuery: RdfQuery = [
+export const webIdProfileQuery: LdhopQuery<
+  | QueryVariables<typeof publicWebIdProfileQuery>
+  | '?preferencesFile'
+  | '?inbox'
+  | '?privateTypeIndex'
+> = [
   ...publicWebIdProfileQuery,
   // find and fetch preferences file
   // https://solid.github.io/webid-profile/#discovery

@@ -1,4 +1,4 @@
-import type { RdfQuery } from '@ldhop/core'
+import type { LdhopQuery, QueryVariables } from '@ldhop/core'
 import { dct, sioc, solid, space } from 'rdf-namespaces'
 import { hospex } from '../utils/rdf-namespaces'
 import {
@@ -8,7 +8,15 @@ import {
 } from './profile'
 
 // in public type index, find all personal hospex documents of the person for a particular community, and fetch them
-const partialHospexDocumentQuery: RdfQuery = [
+const partialHospexDocumentQuery: LdhopQuery<
+  | '?publicTypeIndex'
+  | '?typeRegistration'
+  | '?typeRegistrationForHospex'
+  | '?hospexDocument'
+  | '?person'
+  | '?community'
+  | '?hospexDocumentForCommunity'
+> = [
   {
     type: 'match',
     subject: '?publicTypeIndex',
@@ -42,12 +50,17 @@ const partialHospexDocumentQuery: RdfQuery = [
   },
 ]
 
-export const hospexDocumentQuery: RdfQuery = [
-  ...publicWebIdProfileQuery,
-  ...partialHospexDocumentQuery,
-]
+export const hospexDocumentQuery: LdhopQuery<
+  | QueryVariables<typeof publicWebIdProfileQuery>
+  | QueryVariables<typeof partialHospexDocumentQuery>
+> = [...publicWebIdProfileQuery, ...partialHospexDocumentQuery]
 
-export const privateProfileAndHospexDocumentQuery: RdfQuery = [
+export const privateProfileAndHospexDocumentQuery: LdhopQuery<
+  | QueryVariables<typeof webIdProfileQuery>
+  | QueryVariables<typeof partialHospexDocumentQuery>
+  | '?hospexSettings'
+  | '?inbox'
+> = [
   ...webIdProfileQuery,
   ...partialHospexDocumentQuery,
   {
