@@ -1,4 +1,4 @@
-name: Lint
+name: Build
 on: push
 permissions:
   checks: write
@@ -13,12 +13,5 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: yarn install --frozen-lockfile
-
-      - name: Check code style
-        run: yarn lint --max-warnings 0
-
-      - name: Check formatting
-        run: yarn prettier . --check
-
-      - name: Check clutter
-        run: yarn knip
+      - name: Build
+        run: yarn lerna run build
