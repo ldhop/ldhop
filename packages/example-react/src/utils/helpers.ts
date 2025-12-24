@@ -13,8 +13,8 @@ export const getContainer = (uri: string): string => {
 /**
  * Convert (http) uri to uri with https://
  */
-export const https = (uri: string): string => {
-  const url = new URL(uri)
-  url.protocol = 'https'
-  return url.toString()
-}
+// export const https = (uri: string): string => {
+//   const url = new URL(uri)
+//   url.protocol = 'https'
+//   return url.toString()
+// }

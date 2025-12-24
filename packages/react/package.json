@@ -37,7 +37,8 @@
   "dependencies": {
     "@ldhop/core": "^1.0.0-alpha.2",
     "@types/lodash": "^4.17.0",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "n3": "^1.26.0"
   },
   "devDependencies": {
     "@tanstack/react-query": "^5.28.4",
