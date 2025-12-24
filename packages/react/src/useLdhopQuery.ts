@@ -56,6 +56,7 @@ export const useLdhopQuery = <
     setResources([])
     setOutputStore(store)
     setOutputQuads([])
+    setOutputVariables({})
     resourceRef.current = new Map()
     engineRef.current = new LdhopEngine(query, variables, store, {
       onNeedResource: uri => {
