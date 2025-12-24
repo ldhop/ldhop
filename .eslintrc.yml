@@ -29,6 +29,7 @@ rules:
   react-hooks/rules-of-hooks: error
   react-hooks/exhaustive-deps: warn
   import/no-default-export: error
+  import/no-unresolved: off
 
 parser: '@typescript-eslint/parser'
 parserOptions:
