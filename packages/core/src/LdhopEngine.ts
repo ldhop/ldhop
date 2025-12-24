@@ -8,7 +8,7 @@ import type {
 } from './types.js'
 import { removeHashFromURI } from './utils/helpers.js'
 
-type TermId = `${Term['termType']}:${Term['id']}`
+export type TermId = `${Term['termType']}:${Term['id']}`
 
 type Uri = string
 interface Graph<V extends Variable> {
