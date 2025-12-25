@@ -25,15 +25,22 @@ npm install --save react @tanstack/react-query
 [Learn how to write a LDhop query](https://npmjs.com/package/@ldhop/core#query)
 
 ```ts
-import { useLDhopQuery } from '@ldhop/react'
+import type { LdhopQuery } from '@ldhop/core'
+import { useLdhopQuery } from '@ldhop/react'
 
-const query: RdfQuery = [
+const query: LdhopQuery<'?start1' | '?start2' | '?variable1' | '?variable2'> = [
   // ... the query
 ]
 
-const { isLoading, variables, quads } = useLDhopQuery({
-  query, // LDhop query
-  variables: useMemo(() => ({ person: [webId] }), [webId]), // starting points (memoized)
-  fetch, // default or custom fetch, perhaps authenticated
-})
+const { variables, quads, store, engine, isLoading, isFetching } =
+  useLdhopQuery(
+    useMemo(() => ({
+      query, // LDhop query
+      variables: {
+        '?start1': new Set([uri1, uri2]),
+        '?start2': new Set([uri3]),
+      },
+      fetch, // default or custom fetch, perhaps authenticated
+    })),
+  )
 ```

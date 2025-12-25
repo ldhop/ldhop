@@ -20,8 +20,8 @@ describe('Adding resources to LdhopEngine', () => {
 
     const variables = engine.getAllVariables()
     expect(variables).to.haveOwnProperty('?community')
-    expect(variables['?community'].size).to.equal(1)
-    const term = [...variables['?community']][0]
+    expect(variables['?community']?.size).to.equal(1)
+    const term = Array.from(variables['?community']!)[0]
     expect(term.termType).to.equal('NamedNode')
     expect(term.id).to.equal('https://community.example/community#us')
     const missingResources = engine.getMissingResources()
