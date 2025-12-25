@@ -1,16 +1,11 @@
 import {
   fetchRdfDocument,
   LdhopEngine,
-  type FetchRdfReturnType,
   type LdhopQuery,
   type UriVariables,
   type Variable,
 } from '@ldhop/core'
-import {
-  useQueries,
-  type QueryKey,
-  type UseQueryResult,
-} from '@tanstack/react-query'
+import { useQueries, type QueryKey } from '@tanstack/react-query'
 import { Quad, Store, type Term } from 'n3'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
@@ -18,7 +13,7 @@ type Fetch = typeof globalThis.fetch
 
 export const useLdhopQuery = <
   V extends Variable,
-  AdditionalData extends object = object,
+  // AdditionalData extends object = object,
 >({
   query,
   variables,
@@ -31,9 +26,9 @@ export const useLdhopQuery = <
   fetch: Fetch
   getQueryKey?: (resource: string) => QueryKey
   staleTime?: number
-  getAdditionalData?: (
-    results: UseQueryResult<FetchRdfReturnType, Error>[],
-  ) => AdditionalData
+  // getAdditionalData?: (
+  //   results: UseQueryResult<FetchRdfReturnType, Error>[],
+  // ) => AdditionalData
 }) => {
   const [resources, setResources] = useState<string[]>([])
 
