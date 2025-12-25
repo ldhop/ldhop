@@ -15,7 +15,6 @@ describe('Blank nodes in QueryAndStore', () => {
     await run(qas)
 
     const persons = qas.getVariable('person')
-    // console.log(persons)
     expect(persons).to.have.length(6)
 
     const testPerson = fetchRdf(base)

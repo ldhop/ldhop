@@ -28,14 +28,8 @@ rules:
   no-console: warn
   react-hooks/rules-of-hooks: error
   react-hooks/exhaustive-deps: warn
-  'import/no-default-export': error
-  import/no-unused-modules:
-    - warn
-    - unusedExports: true
-      ignoreExports:
-        - packages/example-react/vite.config.ts
-        - packages/core/src/index.ts
-        - packages/react/src/index.ts
+  import/no-default-export: error
+  import/no-unresolved: off
 
 parser: '@typescript-eslint/parser'
 parserOptions:

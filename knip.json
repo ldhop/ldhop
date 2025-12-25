@@ -1,0 +1,7 @@
+{
+  "workspaces": {
+    "packages/core": { "ignoreDependencies": ["@types/mocha"] },
+    "packages/meta": { "ignoreDependencies": ["@ldhop/core", "@ldhop/react"] },
+    "packages/example-react": { "ignore": "src/queries/*" }
+  }
+}
