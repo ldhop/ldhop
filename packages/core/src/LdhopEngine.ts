@@ -2,7 +2,8 @@ import { NamedNode, Quad, Store, type Term } from 'n3'
 import type {
   LdhopQuery,
   Match,
-  UriVariables,
+  MixedVariableSets,
+  PlainVariable,
   Variable,
   VariableMap,
 } from './types.js'
@@ -207,7 +208,7 @@ export class LdhopEngine<V extends Variable = Variable> {
 
   constructor(
     query: LdhopQuery<V>,
-    startingPoints: UriVariables<V>,
+    startingPoints: Partial<MixedVariableSets<V>>,
     store = new Store(),
     callbacks: EngineCallbacks<V> = {},
   ) {
@@ -224,22 +225,27 @@ export class LdhopEngine<V extends Variable = Variable> {
     // we add a move for each variable that is provided at the beginning
     // sometimes circular reference would try to remove them
     // we prevent that by making sure the initial variables don't get orphaned, with this move
-    for (const key in startingPoints) {
-      if (isVariable<V>(key) && startingPoints[key]) {
-        for (const value of startingPoints[key]) {
-          try {
-            new URL(value)
-            const term = new NamedNode(value)
+    for (const keyUnchecked in startingPoints) {
+      let key: V | undefined = undefined
+      if (!isPlainVariable(keyUnchecked, query) && !isVariable<V>(keyUnchecked))
+        return
+      if (isPlainVariable(keyUnchecked, query)) key = `?${keyUnchecked}` as V
+      else if (isVariable<V>(keyUnchecked)) key = keyUnchecked
+      if (!key) continue
 
-            this.moves.add({
-              step: -1,
-              from: new Map() as VariableMap<V>,
-              to: new Map([[key, new Map([[getTermId(term), term]])]]),
-            })
-            this.addVariable(key, term)
-          } catch {
-            // empty
-          }
+      for (const value of startingPoints[keyUnchecked]!) {
+        try {
+          new URL(value)
+          const term = new NamedNode(value)
+
+          this.moves.add({
+            step: -1,
+            from: new Map() as VariableMap<V>,
+            to: new Map([[key, new Map([[getTermId(term), term]])]]),
+          })
+          this.addVariable(key, term)
+        } catch {
+          // empty
         }
       }
     }
@@ -634,8 +640,12 @@ export class LdhopEngine<V extends Variable = Variable> {
   /**
    * If you provide variable name, this method will return URIs that belong to that variable
    */
-  getVariable(variableName: V) {
-    return new Set(this.variables.get(variableName)?.values())
+  getVariable(variableName: V | PlainVariable<V>) {
+    const variable = isPlainVariable(variableName, this.query)
+      ? (`?${variableName}` as V)
+      : variableName
+
+    return new Set(this.variables.get(variable)?.values())
   }
 
   getVariableAsStringSet(variableName: V) {
@@ -648,6 +658,25 @@ export class LdhopEngine<V extends Variable = Variable> {
         .entries()
         .map(([key, value]) => [key, new Set(value.values())]),
     ) as Partial<{ [key in V]: Set<Term> }>
+  }
+
+  /**
+   * collect all variable names that occur in the query
+   */
+  private getAllVariableNames() {
+    return getVariableNames(this.query)
+  }
+
+  getAllPlainVariables() {
+    const allVariables = this.getAllVariables()
+    const allVariableNames = this.getAllVariableNames()
+    const result = {} as { [key in PlainVariable<V>]: Set<Term> }
+    for (const name of allVariableNames) {
+      result[name.substring(1) as PlainVariable<V>] =
+        allVariables[name] ?? new Set()
+    }
+
+    return result
   }
 
   getAllVariablesAsStringSets() {
@@ -679,6 +708,36 @@ function isVariable<V extends Variable = Variable>(
   return typeof value === 'string' && value.startsWith('?')
 }
 
+// type guard for testing plain variables (variables without question mark)
+function isPlainVariable<V extends Variable>(
+  value: string | undefined,
+  query: LdhopQuery<V>,
+): value is PlainVariable<V> {
+  const variable = `?${value}`
+  return (
+    typeof value === 'string' &&
+    query.some(step => {
+      switch (step.type) {
+        case 'match': {
+          return (
+            step.subject === variable ||
+            step.predicate === variable ||
+            step.object === variable ||
+            step.graph === variable ||
+            step.target === variable
+          )
+        }
+        case 'add resources':
+          return step.variable === variable
+        case 'transform variable':
+          return step.source === variable || step.target === variable
+        default:
+          return false
+      }
+    })
+  )
+}
+
 const termSetToStringSet = (set: Set<Term>): Set<string> =>
   new Set([...set].map(term => term.value))
 
@@ -687,4 +746,33 @@ const termSetToStringSet = (set: Set<Term>): Set<string> =>
  */
 const getTermId = (term: Term): TermId => {
   return `${term.termType}:${term.id}`
+}
+
+/**
+ * Return a Set of all variables that appear in a query
+ */
+export function getVariableNames<V extends Variable>(query: LdhopQuery<V>) {
+  return query.reduce((a, b) => {
+    switch (b.type) {
+      case 'match': {
+        if (isVariable(b.graph)) a.add(b.graph)
+        if (isVariable(b.subject)) a.add(b.subject)
+        if (isVariable(b.predicate)) a.add(b.predicate)
+        if (isVariable(b.object)) a.add(b.object)
+        if (isVariable(b.target)) a.add(b.target)
+        break
+      }
+      case 'add resources': {
+        a.add(b.variable)
+        break
+      }
+      case 'transform variable': {
+        a.add(b.source)
+        a.add(b.target)
+        break
+      }
+      default:
+    }
+    return a
+  }, new Set<V>())
 }

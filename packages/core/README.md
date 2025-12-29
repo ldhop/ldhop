@@ -168,6 +168,7 @@ See [Solid WebID Profile specification](https://solid.github.io/webid-profile/#d
 import type { LdhopQuery, Variable } from '@ldhop/core'
 import { pim, rdfs, solid, ldp } from 'rdf-namespaces'
 
+// TODO change examples to variables without enum
 enum Var {
   person = '?person',
   preferencesFile = '?preferencesFile',
@@ -244,7 +245,7 @@ const engine = new LdhopEngine(query, startingPoints, store?)
 **Parameters:**
 
 - `query: LdhopQuery<Variable>` - the query to execute
-- `startingPoints: UriVariables<Variable>` - initial variable bindings
+- `startingPoints: MixedVariableSets<Variable>` - initial variable bindings
 - `store?: n3.Store` - optional RDF store (defaults to new Store)
 
 #### Properties
@@ -260,6 +261,7 @@ const engine = new LdhopEngine(query, startingPoints, store?)
 - `getVariable(variableName: Variable): Set<Term> | undefined` - get set of RDF terms belonging to this variable
 - `getVariableAsStringSet(variableName: Variable): Set<string>` - get variable values as string URIs
 - `getAllVariables()` - get map of all discovered variables
+- `getAllPlainVariables()` - get all variables' values in the form without question mark
 - `getAllVariablesAsStringSets()` - get all variables with values as string sets
 - `getGraphs(added?: boolean): Set<string>` - get resource URIs by status (added/missing/all)
 
