@@ -37,8 +37,9 @@ const { variables, quads, store, engine, isLoading, isFetching } =
     useMemo(() => ({
       query, // LDhop query
       variables: {
-        '?start1': new Set([uri1, uri2]),
-        '?start2': new Set([uri3]),
+        // variables without the leading ?
+        start1: new Set([uri1, uri2]),
+        start2: new Set([uri3]),
       },
       fetch, // default or custom fetch, perhaps authenticated
     })),

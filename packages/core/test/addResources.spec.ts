@@ -202,3 +202,15 @@ describe('Adding resources to LdhopEngine', () => {
     expect(allGraphs2.size).to.equal(0)
   })
 })
+
+it('should also use plain variables', async () => {
+  const engine = new LdhopEngine(personAccommodationsQuery, {
+    person: new Set(['https://person.example/profile/card#me']),
+    community: new Set(['https://community.example/community#us']),
+  })
+
+  await run(engine)
+
+  const variables = engine.getAllPlainVariables()
+  expect(variables.offer.size).to.equal(2)
+})

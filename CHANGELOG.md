@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **core**, **react** - Support variables without `?` as starting points. This API may change before v1.0.
+- **core** - Add method `getAllPlainVariables` to `LdhopEngine` to get the result variables without `?`. This API may change before v1.0.
+- **core** - Add a helper method `getVariableNames(query)` that returns set of all variables within a LdhopQuery.
+
+### Changed
+
+- **react** - **BREAKING CHANGE** - Result variables in `useLdhopQuery` are plain variables. This API may change before v1.0.
+
 ## [1.0.0-alpha.3] - 2025-12-25
 
 ### Added

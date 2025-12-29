@@ -1,8 +1,10 @@
 import {
   fetchRdfDocument,
+  getVariableNames,
   LdhopEngine,
   type LdhopQuery,
-  type UriVariables,
+  type MixedVariableSets,
+  type PlainVariable,
   type Variable,
 } from '@ldhop/core'
 import { useQueries, type QueryKey } from '@tanstack/react-query'
@@ -10,6 +12,16 @@ import { Quad, Store, type Term } from 'n3'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 type Fetch = typeof globalThis.fetch
+
+const getEmptyVariables = <V extends Variable>(
+  query: LdhopQuery<V>,
+): { [key in PlainVariable<V>]: Set<Term> } => {
+  return Object.fromEntries(
+    Array.from(getVariableNames(query)).map(
+      v => [v.substring(1), new Set<Term>()] as const,
+    ),
+  ) as { [key in PlainVariable<V>]: Set<Term> }
+}
 
 export const useLdhopQuery = <
   V extends Variable,
@@ -22,7 +34,7 @@ export const useLdhopQuery = <
   staleTime = Infinity,
 }: {
   query: LdhopQuery<V>
-  variables: UriVariables<V>
+  variables: Partial<MixedVariableSets<V>>
   fetch: Fetch
   getQueryKey?: (resource: string) => QueryKey
   staleTime?: number
@@ -32,9 +44,9 @@ export const useLdhopQuery = <
 }) => {
   const [resources, setResources] = useState<string[]>([])
 
-  const [outputVariables, setOutputVariables] = useState<
-    Partial<{ [key in V]: Set<Term> }>
-  >({})
+  const [outputVariables, setOutputVariables] = useState<{
+    [key in PlainVariable<V>]: Set<Term>
+  }>(getEmptyVariables(query))
   const [outputStore, setOutputStore] = useState(new Store())
   const [outputQuads, setOutputQuads] = useState<Quad[]>([])
 
@@ -51,7 +63,7 @@ export const useLdhopQuery = <
     setResources([])
     setOutputStore(store)
     setOutputQuads([])
-    setOutputVariables({})
+    setOutputVariables(getEmptyVariables(query))
     resourceRef.current = new Map()
     engineRef.current = new LdhopEngine(query, variables, store, {
       onNeedResource: uri => {
@@ -69,11 +81,11 @@ export const useLdhopQuery = <
         resourceRef.current?.delete(uri)
       },
       onVariableAdded(this: LdhopEngine<V>) {
-        const ov = this.getAllVariables()
+        const ov = this.getAllPlainVariables()
         if (ov) setOutputVariables(ov)
       },
       onVariableRemoved(this: LdhopEngine<V>) {
-        const ov = this.getAllVariables()
+        const ov = this.getAllPlainVariables()
         if (ov) setOutputVariables(ov)
       },
       onQueryComplete() {

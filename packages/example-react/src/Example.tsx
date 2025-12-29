@@ -89,7 +89,7 @@ export const Example = () => {
     Object.entries(variables).forEach(([variable, uris]) => {
       uris?.forEach(uri => {
         nodes[uri.value] ??= new Set()
-        nodes[uri.value].add(variable)
+        nodes[uri.value].add(`?${variable}`)
       })
     })
 

@@ -3,6 +3,9 @@ import type { QueryAndStore } from './index.js'
 import type { TermId } from './LdhopEngine.js'
 
 export type Variable = `?${string}`
+export type PlainVariable<T extends string> = T extends `?${infer P}`
+  ? P
+  : never
 
 export type Constant = '' | `${Letter | UpperLetter | Digit | Special}${string}`
 
@@ -90,6 +93,14 @@ type Special = UrlSafe | Punctuation | Brackets | Quotes | Symbols
 export type UriVariables<V extends Variable> = Partial<{
   [key in V]: Set<string>
 }>
+
+export type PlainVariableSets<V extends Variable> = {
+  [key in PlainVariable<V>]: Set<string>
+}
+
+export type MixedVariableSets<V extends Variable> = {
+  [key in PlainVariable<V> | V]: Set<string>
+}
 
 export type VariableMap<V extends Variable, Value = Term> = Map<
   V,
