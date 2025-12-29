@@ -90,16 +90,8 @@ type Quotes = "'" | '"' | '`'
 type Symbols = '~' | '^' | '|' | '\\'
 type Special = UrlSafe | Punctuation | Brackets | Quotes | Symbols
 
-export type UriVariables<V extends Variable> = Partial<{
-  [key in V]: Set<string>
-}>
-
-export type PlainVariableSets<V extends Variable> = {
-  [key in PlainVariable<V>]: Set<string>
-}
-
-export type MixedVariableSets<V extends Variable> = {
-  [key in PlainVariable<V> | V]: Set<string>
+export type MixedVariables<V extends Variable> = {
+  [key in PlainVariable<V> | V]: Iterable<string> & object
 }
 
 export type VariableMap<V extends Variable, Value = Term> = Map<

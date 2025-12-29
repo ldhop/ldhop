@@ -3,7 +3,7 @@ import {
   getVariableNames,
   LdhopEngine,
   type LdhopQuery,
-  type MixedVariableSets,
+  type MixedVariables,
   type PlainVariable,
   type Variable,
 } from '@ldhop/core'
@@ -34,7 +34,7 @@ export const useLdhopQuery = <
   staleTime = Infinity,
 }: {
   query: LdhopQuery<V>
-  variables: Partial<MixedVariableSets<V>>
+  variables: Partial<MixedVariables<V>>
   fetch: Fetch
   getQueryKey?: (resource: string) => QueryKey
   staleTime?: number

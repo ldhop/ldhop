@@ -2,7 +2,7 @@ import { NamedNode, Quad, Store, type Term } from 'n3'
 import type {
   LdhopQuery,
   Match,
-  MixedVariableSets,
+  MixedVariables,
   PlainVariable,
   Variable,
   VariableMap,
@@ -208,7 +208,7 @@ export class LdhopEngine<V extends Variable = Variable> {
 
   constructor(
     query: LdhopQuery<V>,
-    startingPoints: Partial<MixedVariableSets<V>>,
+    startingPoints: Partial<MixedVariables<V>>,
     store = new Store(),
     callbacks: EngineCallbacks<V> = {},
   ) {

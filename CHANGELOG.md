@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **core** - Generalize type of input variables to Iterable.
+
+### Removed
+
+- **core** - Remove some unused types.
+
 ## [1.0.0-alpha.4] - 2025-12-29
 
 ### Added
