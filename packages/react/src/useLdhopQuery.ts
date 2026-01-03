@@ -13,6 +13,19 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 type Fetch = typeof globalThis.fetch
 
+export const DEFAULT_QUERY_KEY = 'rdfDocument'
+
+const defaultQueryKeyFn = (resource: string): QueryKey => [
+  DEFAULT_QUERY_KEY,
+  resource,
+]
+
+let globalQueryKeyFn: (resource: string) => QueryKey = defaultQueryKeyFn
+
+export const configureQueryKey = (fn: (resource: string) => QueryKey): void => {
+  globalQueryKeyFn = fn
+}
+
 const getEmptyVariables = <V extends Variable>(
   query: LdhopQuery<V>,
 ): { [key in PlainVariable<V>]: Set<Term> } => {
@@ -30,7 +43,7 @@ export const useLdhopQuery = <
   query,
   variables,
   fetch,
-  getQueryKey = resource => ['rdfDocument', resource],
+  getQueryKey = globalQueryKeyFn,
   staleTime = Infinity,
 }: {
   query: LdhopQuery<V>

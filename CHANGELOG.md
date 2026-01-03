@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **react** - Allow globally configuring the React Query key via `configureQueryKey`. Export `DEFAULT_QUERY_KEY`.
+
 ## [1.0.0-alpha.5] - 2025-12-30
 
 ### Changed

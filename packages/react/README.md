@@ -45,3 +45,15 @@ const { variables, quads, store, engine, isLoading, isFetching } =
     })),
   )
 ```
+
+## Configure query key
+
+By default `useLdhopQuery` stores results under the React Query key `['rdfDocument', resource]`. If you need a different namespace, set it once at app startup with `configureQueryKey`.
+
+```ts
+import { configureQueryKey } from '@ldhop/react'
+
+configureQueryKey(resource => ['myApp', 'ldhop', resource])
+```
+
+All hooks share the configured key generator unless you pass a `getQueryKey` override to one call. The default string literal is exported as `DEFAULT_QUERY_KEY`.
