@@ -1,5 +1,6 @@
 import type { LdhopQuery, Variable } from './types.js'
 export { getVariableNames, LdhopEngine } from './LdhopEngine.js'
+export { ldhop } from './query.js'
 export { QueryAndStore } from './QueryAndStore.js'
 export {
   fetchRdfDocument,
