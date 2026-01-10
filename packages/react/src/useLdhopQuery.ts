@@ -40,6 +40,7 @@ const getEmptyVariables = <V extends Variable>(
 export const useLdhopQuery = <
   V extends Variable,
   // AdditionalData extends object = object,
+  S extends V = V,
 >({
   query: queryInput,
   variables,
@@ -47,7 +48,7 @@ export const useLdhopQuery = <
   getQueryKey = globalQueryKeyFn,
   staleTime = Infinity,
 }: {
-  query: LdhopQuery<V> | LdhopQueryBuilder<V>
+  query: LdhopQuery<V> | Omit<LdhopQueryBuilder<V, S>, 'add' | '_match'>
   variables: Partial<MixedVariables<V>>
   fetch: Fetch
   getQueryKey?: (resource: string) => QueryKey
