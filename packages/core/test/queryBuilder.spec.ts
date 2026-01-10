@@ -1,6 +1,7 @@
 import { expect } from 'chai'
 import { NamedNode, type Term } from 'n3'
-import { foaf, rdfs } from 'rdf-namespaces'
+import { foaf, ldp, rdfs, solid, space } from 'rdf-namespaces'
+import { LdhopQuery } from '../src/index.js'
 import { ldhop } from '../src/query.js'
 
 describe('Functional query builder', () => {
@@ -142,5 +143,78 @@ describe('Functional query builder', () => {
       type: 'add resources',
       variable: '?profile',
     })
+  })
+
+  it('should succeed in a real-world example', () => {
+    const query = ldhop('?person')
+      .match('?person', space.preferencesFile)
+      .o('?preferencesFile')
+      .add()
+      .match('?person', rdfs.seeAlso)
+      .o('?profileDocument')
+      .add()
+      .match('?person', solid.publicTypeIndex)
+      .o('?publicTypeIndex')
+      .match('?person', solid.privateTypeIndex)
+      .o('?privateTypeIndex')
+      .match('?person', ldp.inbox)
+      .o('?inbox')
+      .toArray()
+
+    // find person and their profile documents
+    const webIdProfileQuery: LdhopQuery<
+      | '?person'
+      | '?preferencesFile'
+      | '?profileDocument'
+      | '?publicTypeIndex'
+      | '?privateTypeIndex'
+      | '?inbox'
+    > = [
+      // find and fetch preferences file
+      {
+        type: 'match',
+        subject: '?person',
+        predicate: space.preferencesFile,
+        pick: 'object',
+        target: '?preferencesFile',
+      },
+      { type: 'add resources', variable: '?preferencesFile' },
+      // find extended profile documents
+      {
+        type: 'match',
+        subject: '?person',
+        predicate: rdfs.seeAlso,
+        pick: 'object',
+        target: '?profileDocument',
+      },
+      // fetch the extended profile documents
+      { type: 'add resources', variable: '?profileDocument' },
+      // find public type index
+      {
+        type: 'match',
+        subject: '?person',
+        predicate: solid.publicTypeIndex,
+        pick: 'object',
+        target: '?publicTypeIndex',
+      },
+      // find private type index
+      {
+        type: 'match',
+        subject: '?person',
+        predicate: solid.privateTypeIndex,
+        pick: 'object',
+        target: '?privateTypeIndex',
+      },
+      // find inbox
+      {
+        type: 'match',
+        subject: '?person',
+        predicate: ldp.inbox,
+        pick: 'object',
+        target: '?inbox',
+      },
+    ]
+
+    expect(query).to.deep.equal(webIdProfileQuery)
   })
 })
