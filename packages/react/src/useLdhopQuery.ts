@@ -3,6 +3,7 @@ import {
   getVariableNames,
   LdhopEngine,
   type LdhopQuery,
+  type LdhopQueryBuilder,
   type MixedVariables,
   type PlainVariable,
   type Variable,
@@ -40,13 +41,13 @@ export const useLdhopQuery = <
   V extends Variable,
   // AdditionalData extends object = object,
 >({
-  query,
+  query: queryInput,
   variables,
   fetch,
   getQueryKey = globalQueryKeyFn,
   staleTime = Infinity,
 }: {
-  query: LdhopQuery<V>
+  query: LdhopQuery<V> | LdhopQueryBuilder<V>
   variables: Partial<MixedVariables<V>>
   fetch: Fetch
   getQueryKey?: (resource: string) => QueryKey
@@ -56,6 +57,9 @@ export const useLdhopQuery = <
   // ) => AdditionalData
 }) => {
   const [resources, setResources] = useState<string[]>([])
+
+  // convert query to array format
+  const query = useMemo(() => [...queryInput], [queryInput])
 
   const [outputVariables, setOutputVariables] = useState<{
     [key in PlainVariable<V>]: Set<Term>

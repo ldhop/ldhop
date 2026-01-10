@@ -1,5 +1,5 @@
 /* eslint-disable import/no-unused-modules */
-import { LdhopQuery } from '@ldhop/core'
+import { ldhop } from '@ldhop/core'
 import { NamedNode } from 'n3'
 import { foaf } from 'rdf-namespaces'
 
@@ -17,35 +17,17 @@ export {
 export { inboxMessagesQuery, messages, threads } from './messages'
 export { profileDocuments, webIdProfileQuery } from './profile'
 
-export const friendOfAFriendQuery: LdhopQuery<'?person'> = [
-  {
-    type: 'match',
-    subject: '?person',
-    predicate: foaf.knows,
-    pick: 'object',
-    target: '?person',
-  },
-]
+export const friendOfAFriendQuery = ldhop('?person')
+  .match('?person', foaf.knows)
+  .o('?person')
 
-export const friendOfAFriendQuerySolidCommunityFix: LdhopQuery<
-  '?person' | '?personNext'
-> = [
-  {
-    type: 'match',
-    subject: '?person',
-    predicate: foaf.knows,
-    pick: 'object',
-    target: '?personNext',
-  },
-  {
-    type: 'transform variable',
-    source: '?personNext',
-    target: '?person',
-    transform: term =>
-      term.termType === 'NamedNode'
-        ? new NamedNode(
-            term.value.replace('solid.community', 'solidcommunity.net'),
-          )
-        : undefined,
-  },
-]
+export const friendOfAFriendQuerySolidCommunityFix = ldhop('?person')
+  .match('?person', foaf.knows)
+  .o('?personNext')
+  .transform('?personNext', '?person', term =>
+    term.termType === 'NamedNode'
+      ? new NamedNode(
+          term.value.replace('solid.community', 'solidcommunity.net'),
+        )
+      : undefined,
+  )

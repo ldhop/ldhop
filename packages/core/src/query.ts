@@ -11,7 +11,7 @@ type Picks<V extends Variable> = {
 import type { Term } from 'n3'
 import type { Constant, LdhopQuery, Variable } from './types.js'
 
-class LdhopQueryBuilder<V extends Variable> {
+export class LdhopQueryBuilder<V extends Variable> {
   query: LdhopQuery<V> = []
 
   constructor(query?: LdhopQuery<V>) {
@@ -85,7 +85,9 @@ class LdhopQueryBuilder<V extends Variable> {
     ])
   }
 
-  concat<V2 extends Variable>(other: LdhopQueryBuilder<V2> | LdhopQuery<V2>) {
+  concat<V2 extends Variable>(
+    other: Omit<LdhopQueryBuilder<V2>, '_match' | 'add'> | LdhopQuery<V2>,
+  ) {
     return new LdhopQueryBuilder<V | V2>([...this.query, ...other])
   }
 

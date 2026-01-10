@@ -24,14 +24,14 @@ const queryOptions: {
     startingPoints: {},
   },
   foaf: {
-    query: friendOfAFriendQuerySolidCommunityFix,
+    query: friendOfAFriendQuerySolidCommunityFix.toArray(),
     startingPoints: {
       community: [queryEntryCommunity],
       person: [queryEntryPerson],
     },
   },
   hospex: {
-    query: hospexDocumentQuery,
+    query: hospexDocumentQuery.toArray(),
     startingPoints: {
       community: [queryEntryCommunity],
       person: [queryEntryPerson],

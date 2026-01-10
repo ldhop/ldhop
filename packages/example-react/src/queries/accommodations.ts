@@ -3,8 +3,10 @@ import { hospex } from '../utils/rdf-namespaces'
 import { readCommunityMembersQuery } from './community'
 import { hospexDocumentQuery } from './hospex'
 
+const qa = hospexDocumentQuery.toArray()
+
 export const readPersonAccommodationsQuery: LdhopQuery<
-  QueryVariables<typeof hospexDocumentQuery> | '?offer'
+  QueryVariables<typeof qa> | '?offer'
 > = [
   ...hospexDocumentQuery,
   {

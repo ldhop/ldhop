@@ -18,25 +18,26 @@ interface QueryOption<V extends Variable> {
   startingPoints: Partial<{ [v in V]: Set<string> }>
 }
 
+const foafQuery = friendOfAFriendQuerySolidCommunityFix.toArray()
+const hospexQuery = hospexDocumentQuery.toArray()
+
 const queryOptions: {
   empty: QueryOption<never>
-  foaf: QueryOption<
-    QueryVariables<typeof friendOfAFriendQuerySolidCommunityFix>
-  >
-  hospex: QueryOption<QueryVariables<typeof hospexDocumentQuery>>
+  foaf: QueryOption<QueryVariables<typeof foafQuery>>
+  hospex: QueryOption<QueryVariables<typeof hospexQuery>>
 } = {
   empty: {
     query: [],
     startingPoints: {},
   },
   foaf: {
-    query: friendOfAFriendQuerySolidCommunityFix,
+    query: friendOfAFriendQuerySolidCommunityFix.toArray(),
     startingPoints: {
       '?person': new Set([queryEntryPerson]),
     },
   },
   hospex: {
-    query: hospexDocumentQuery,
+    query: hospexQuery,
     startingPoints: {
       '?community': new Set([queryEntryCommunity]),
       '?person': new Set([queryEntryPerson]),

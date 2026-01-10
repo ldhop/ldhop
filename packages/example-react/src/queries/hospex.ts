@@ -1,75 +1,35 @@
-import type { LdhopQuery, QueryVariables } from '@ldhop/core'
-import { dct, sioc, solid, space } from 'rdf-namespaces'
+import { ldhop } from '@ldhop/core'
+import { ldp, rdf, sioc, solid, space } from 'rdf-namespaces'
 import { hospex } from '../utils/rdf-namespaces'
-import {
-  personInbox,
-  publicWebIdProfileQuery,
-  webIdProfileQuery,
-} from './profile'
+import { publicWebIdProfileQuery, webIdProfileQuery } from './profile'
 
 // in public type index, find all personal hospex documents of the person for a particular community, and fetch them
-const partialHospexDocumentQuery: LdhopQuery<
-  | '?publicTypeIndex'
-  | '?typeRegistration'
-  | '?typeRegistrationForHospex'
-  | '?hospexDocument'
-  | '?person'
-  | '?community'
-  | '?hospexDocumentForCommunity'
-> = [
-  {
-    type: 'match',
-    subject: '?publicTypeIndex',
-    predicate: dct.references,
-    pick: 'object',
-    target: '?typeRegistration',
-  },
-  {
-    type: 'match',
-    subject: '?typeRegistration',
-    predicate: solid.forClass,
-    object: hospex.PersonalHospexDocument,
-    pick: 'subject',
-    target: '?typeRegistrationForHospex',
-  },
-  {
-    type: 'match',
-    subject: '?typeRegistrationForHospex',
-    predicate: solid.instance,
-    pick: 'object',
-    target: `?hospexDocument`,
-  },
-  { type: 'add resources', variable: '?hospexDocument' },
-  {
-    type: 'match',
-    subject: '?person',
-    predicate: sioc.member_of,
-    object: '?community',
-    pick: 'graph',
-    target: '?hospexDocumentForCommunity',
-  },
-]
+const partialHospexDocumentQuery = ldhop(
+  '?publicTypeIndex',
+  '?person',
+  '?community',
+)
+  .match(null, rdf.type, solid.TypeRegistration, '?publicTypeIndex')
+  .s('?typeRegistration')
+  .match('?typeRegistration', solid.forClass, hospex.PersonalHospexDocument)
+  .s('?typeRegistrationForHospex')
+  .match('?typeRegistrationForHospex', solid.instance)
+  .o('?hospexDocument')
+  .add()
+  .match('?person', sioc.member_of, '?community')
+  .g('?hospexDocumentForCommunity')
 
-export const hospexDocumentQuery: LdhopQuery<
-  | QueryVariables<typeof publicWebIdProfileQuery>
-  | QueryVariables<typeof partialHospexDocumentQuery>
-> = [...publicWebIdProfileQuery, ...partialHospexDocumentQuery]
+export const hospexDocumentQuery = publicWebIdProfileQuery.concat(
+  partialHospexDocumentQuery,
+)
 
-export const privateProfileAndHospexDocumentQuery: LdhopQuery<
-  | QueryVariables<typeof webIdProfileQuery>
-  | QueryVariables<typeof partialHospexDocumentQuery>
-  | '?hospexSettings'
-  | '?inbox'
-> = [
-  ...webIdProfileQuery,
-  ...partialHospexDocumentQuery,
-  {
-    type: 'match',
-    subject: '?person',
-    predicate: space.preferencesFile,
-    graph: '?hospexDocumentForCommunity',
-    pick: 'object',
-    target: '?hospexSettings',
-  },
-  personInbox,
-]
+export const privateProfileAndHospexDocumentQuery = ldhop(
+  '?person',
+  '?community',
+)
+  .concat(webIdProfileQuery)
+  .concat(partialHospexDocumentQuery)
+  .match('?person', space.preferencesFile, null, '?hospexDocumentForCommunity')
+  .o('?hospexSettings')
+  .match('?person', ldp.inbox)
+  .o('?inbox')
