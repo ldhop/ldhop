@@ -1,14 +1,14 @@
-type AfterPick<V extends Variable, S extends V> = Omit<
+type LdhopQueryBuilderAfterMatch<V extends Variable, S extends V> = Omit<
   LdhopQueryBuilder<V, S>,
   'add'
 > &
   Picks<V, S> & { add: (v?: V) => LdhopQueryBuilder<V, S> }
 
 type Picks<V extends Variable, S extends V> = {
-  s: <N extends Variable>(t: N) => AfterPick<V | N, S>
-  p: <N extends Variable>(t: N) => AfterPick<V | N, S>
-  o: <N extends Variable>(t: N) => AfterPick<V | N, S>
-  g: <N extends Variable>(t: N) => AfterPick<V | N, S>
+  s: <N extends Variable>(t: N) => LdhopQueryBuilderAfterMatch<V | N, S>
+  p: <N extends Variable>(t: N) => LdhopQueryBuilderAfterMatch<V | N, S>
+  o: <N extends Variable>(t: N) => LdhopQueryBuilderAfterMatch<V | N, S>
+  g: <N extends Variable>(t: N) => LdhopQueryBuilderAfterMatch<V | N, S>
 }
 
 import type { Term } from 'n3'
@@ -44,7 +44,7 @@ export class LdhopQueryBuilder<V extends Variable, S extends V> {
     p?: V | Constant | null,
     o?: V | Constant | null,
     g?: V | Constant | null,
-  ): AfterPick<V | NV, S> {
+  ): LdhopQueryBuilderAfterMatch<V | NV, S> {
     const builder = new LdhopQueryBuilder<V | NV, S>([
       ...this.query,
       {
@@ -90,11 +90,11 @@ export class LdhopQueryBuilder<V extends Variable, S extends V> {
     ])
   }
 
-  concat<V2 extends Variable, S2 extends V2 = V2>(
+  concat<V2 extends Variable, S2 extends V2>(
     other:
-      | Omit<LdhopQueryBuilder<V2, S2>, '_match' | 'add'>
-      | LdhopQuery<V2>
-      | AfterPick<V2, S2>,
+      | LdhopQueryBuilderAfterMatch<V2, S2>
+      | LdhopQueryBuilder<V2, S2>
+      | LdhopQuery<V2>,
   ) {
     return new LdhopQueryBuilder<V | V2, S | Exclude<S2, V>>([
       ...this.query,
