@@ -1,6 +1,6 @@
 {
   "name": "@ldhop/core",
-  "version": "1.0.0-alpha.5",
+  "version": "1.0.0-alpha.6",
   "description": "Follow your nose through linked data resources - core",
   "homepage": "https://github.com/ldhop/ldhop/tree/main/packages/core",
   "repository": {
