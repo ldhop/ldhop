@@ -3,111 +3,46 @@ import { NamedNode, type Term } from 'n3'
 import { as, dct, ldp, rdf, solid, space } from 'rdf-namespaces'
 import { getContainer } from '../utils/helpers'
 import { meeting, wf } from '../utils/rdf-namespaces'
-import { personInbox, profileDocuments } from './profile'
+import { profileDocuments } from './profile'
 
-export const inboxMessagesQuery: RdfQuery = [
-  ...profileDocuments,
-  personInbox,
-  {
-    type: 'match',
-    subject: '?inbox',
-    predicate: ldp.contains,
-    pick: 'object',
-    target: '?notification',
-  },
-  {
-    type: 'match',
-    subject: '?notification',
-    predicate: rdf.type,
-    object: as.Add,
-    pick: 'subject',
-    target: '?addNotification',
-  },
-  {
-    type: 'match',
-    subject: '?addNotification',
-    predicate: as.context,
-    object: 'https://www.pod-chat.com/LongChatMessage',
-    pick: 'subject',
-    target: '?longChatNotification',
-  },
-  {
-    type: 'match',
-    subject: '?longChatNotification',
-    predicate: as.object,
-    pick: 'object',
-    target: '?message',
-  },
-  { type: 'add resources', variable: '?message' },
-  {
-    type: 'match',
-    subject: '?longChatNotification',
-    predicate: as.target,
-    pick: 'object',
-    target: '?chat',
-  },
-  { type: 'add resources', variable: '?chat' },
-]
+export const inboxMessagesQuery = profileDocuments
+  .match('?person', ldp.inbox)
+  .o('?inbox')
+  .match('?inbox', ldp.contains)
+  .o('?notification')
+  .match('?notification', rdf.type, as.Add)
+  .s('?addNotification')
+  .match(
+    '?addNotification',
+    as.context,
+    'https://www.pod-chat.com/LongChatMessage',
+  )
+  .s('?longChatNotification')
+  .match('?longChatNotification', as.object)
+  .o('?message')
+  .add()
+  .match('?longChatNotification', as.target)
+  .o('?chat')
+  .add()
 
-const chats: RdfQuery = [
-  ...profileDocuments,
-  {
-    type: 'match',
-    subject: '?person',
-    predicate: space.preferencesFile,
-    pick: 'object',
-    target: '?preferencesFile',
-  },
-  { type: 'add resources', variable: '?preferencesFile' },
-  // find and fetch private type index
-  {
-    type: 'match',
-    subject: '?person',
-    predicate: solid.privateTypeIndex,
-    pick: 'object',
-    target: '?privateTypeIndex',
-  },
-  {
-    type: 'match',
-    subject: '?privateTypeIndex',
-    predicate: dct.references,
-    pick: 'object',
-    target: '?typeRegistration',
-  },
-  {
-    type: 'match',
-    subject: '?typeRegistration',
-    predicate: solid.forClass,
-    object: meeting.LongChat,
-    pick: 'subject',
-    target: '?typeRegistrationForChat',
-  },
-  {
-    type: 'match',
-    subject: '?typeRegistrationForChat',
-    predicate: solid.instance,
-    pick: 'object',
-    target: `?chat`,
-  },
-  {
-    type: 'match',
-    subject: '?chat',
-    predicate: wf.participation,
-    pick: 'object',
-    target: '?participation',
-  },
-]
+const chats = profileDocuments
+  .match('?person', space.preferencesFile)
+  .o('?preferencesFile')
+  .add()
+  .match('?person', solid.privateTypeIndex)
+  .o('?privateTypeIndex')
+  .match(null, rdf.type, solid.TypeRegistration, '?privateTypeIndex')
+  .s('?typeRegistration')
+  .match('?typeRegistration', solid.forClass, meeting.LongChat)
+  .s('?typeRegistrationForChat')
+  .match('?typeRegistrationForChat', solid.instance)
+  .o('?chat')
+  .match('?chat', wf.participation)
+  .o('?participation')
 
-const threadsQuery: RdfQuery = [
-  ...chats,
-  {
-    type: 'match',
-    subject: '?participation',
-    predicate: dct.references,
-    pick: 'object',
-    target: '?otherChat',
-  },
-]
+const threadsQuery = chats
+  .match('?participation', dct.references)
+  .o('?otherChat')
 
 const chatsWithPerson: RdfQuery = [
   ...chats,

@@ -168,62 +168,57 @@ See [Solid WebID Profile specification](https://solid.github.io/webid-profile/#d
 import type { LdhopQuery, Variable } from '@ldhop/core'
 import { pim, rdfs, solid, ldp } from 'rdf-namespaces'
 
-// TODO change examples to variables without enum
-enum Var {
-  person = '?person',
-  preferencesFile = '?preferencesFile',
-  profileDocument = '?profileDocument',
-  publicTypeIndex = '?publicTypeIndex',
-  privateTypeIndex = '?privateTypeIndex',
-  inbox = '?inbox',
-}
-
-Object.values(Var) satisfies Variable[]
-
 // find person and their profile documents
-const webIdProfileQuery: LdhopQuery<Var> = [
+const webIdProfileQuery: LdhopQuery<
+  | '?person'
+  | '?preferencesFile'
+  | '?profileDocument'
+  | '?publicTypeIndex'
+  | '?privateTypeIndex'
+  | '?inbox'
+> = [
   // find and fetch preferences file
   {
     type: 'match',
-    subject: Var.person,
-    predicate: pim.preferencesFile,
+    subject: '?person',
+    predicate: space.preferencesFile,
     pick: 'object',
-    target: Var.preferencesFile,
+    target: '?preferencesFile',
   },
-  { type: 'add resources', variable: Var.preferencesFile },
+  { type: 'add resources', variable: '?preferencesFile' },
   // find extended profile documents
   {
     type: 'match',
-    subject: Var.person,
+    subject: '?person',
     predicate: rdfs.seeAlso,
     pick: 'object',
-    target: Var.profileDocument,
+    target: '?profileDocument',
   },
   // fetch the extended profile documents
-  { type: 'add resources', variable: Var.profileDocument },
+  { type: 'add resources', variable: '?profileDocument' },
   // find public type index
   {
     type: 'match',
-    subject: Var.person,
+    subject: '?person',
     predicate: solid.publicTypeIndex,
     pick: 'object',
-    target: Var.publicTypeIndex,
+    target: '?publicTypeIndex',
   },
   // find private type index
   {
     type: 'match',
-    subject: Var.person,
+    subject: '?person',
     predicate: solid.privateTypeIndex,
     pick: 'object',
-    target: Var.privateTypeIndex,
+    target: '?privateTypeIndex',
   },
   // find inbox
   {
     type: 'match',
-    subject: Var.person,
+    subject: '?person',
     predicate: ldp.inbox,
     pick: 'object',
-    target: Var.inbox,
+    target: '?inbox',
   },
 ]
 ```
@@ -231,6 +226,37 @@ const webIdProfileQuery: LdhopQuery<Var> = [
 The query corresponds to the following picture. The resources identified by the URIs within the variables in **bold circles** are fetched while it is executed.
 
 ![webId profile query visualized](https://raw.githubusercontent.com/ldhop/ldhop/main/docs/webid_profile_query_visual.png)
+
+### Query Builder
+
+Instead of writing the array of commands, you can use a convenient functional query builder:
+
+```ts
+import { ldhop } from '@ldhop/core'
+
+const webIdProfileQuery = ldhop('?person') // starting variables as function attributes
+  .match('?person', space.preferencesFile)
+  .o('?preferencesFile')
+  .add()
+  .match('?person', rdfs.seeAlso)
+  .o('?profileDocument')
+  .add()
+  .match('?person', solid.publicTypeIndex)
+  .o('?publicTypeIndex')
+  .match('?person', solid.privateTypeIndex)
+  .o('?privateTypeIndex')
+  .match('?person', ldp.inbox)
+  .o('?inbox')
+  .toArray()
+```
+
+Methods:
+
+- `match(s, p, o, g).{s|p|o|g}('?targetVariable')` - match a quad and hop through it
+- `add()` or `add(?variable)` - add resources
+- `transform('?source', '?target', transformFn)` - transform variable
+- `concat(query)` - concatenate two queries
+- `toArray()` - get query in array format
 
 ## API
 

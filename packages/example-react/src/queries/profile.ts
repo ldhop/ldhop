@@ -1,4 +1,4 @@
-import type { LdhopQuery, Match, QueryVariables } from '@ldhop/core'
+import { ldhop, type Match } from '@ldhop/core'
 import { ldp, rdfs, solid, space } from 'rdf-namespaces'
 
 export const personInbox: Match<'?person' | '?inbox'> = {
@@ -9,58 +9,22 @@ export const personInbox: Match<'?person' | '?inbox'> = {
   target: '?inbox',
 }
 
-export const profileDocuments: LdhopQuery<'?person' | '?profileDocument'> = [
-  {
-    type: 'match',
-    subject: '?person',
-    predicate: rdfs.seeAlso, // TODO also include foaf.isPrimaryTopicOf
-    pick: 'object',
-    target: '?profileDocument',
-  },
-  // fetch the profile documents
-  { type: 'add resources', variable: '?profileDocument' },
-]
+export const profileDocuments = ldhop('?person')
+  .match('?person', rdfs.seeAlso)
+  .o('?profileDocument')
+  .add()
 
-export const publicWebIdProfileQuery: LdhopQuery<
-  QueryVariables<typeof profileDocuments> | '?publicTypeIndex'
-> = [
-  ...profileDocuments,
-  // find public type index
-  {
-    type: 'match',
-    subject: '?person',
-    predicate: solid.publicTypeIndex,
-    pick: 'object',
-    target: '?publicTypeIndex',
-  },
-]
+export const publicWebIdProfileQuery = profileDocuments
+  .match('?person', solid.publicTypeIndex)
+  .o('?publicTypeIndex')
 
 // find person and their profile documents
 // https://solid.github.io/webid-profile/#discovery
-export const webIdProfileQuery: LdhopQuery<
-  | QueryVariables<typeof publicWebIdProfileQuery>
-  | '?preferencesFile'
-  | '?inbox'
-  | '?privateTypeIndex'
-> = [
-  ...publicWebIdProfileQuery,
-  // find and fetch preferences file
-  // https://solid.github.io/webid-profile/#discovery
-  {
-    type: 'match',
-    subject: '?person',
-    predicate: space.preferencesFile,
-    pick: 'object',
-    target: '?preferencesFile',
-  },
-  { type: 'add resources', variable: '?preferencesFile' },
-  // find and fetch private type index
-  {
-    type: 'match',
-    subject: '?person',
-    predicate: solid.privateTypeIndex,
-    pick: 'object',
-    target: '?privateTypeIndex',
-  },
-  personInbox,
-]
+export const webIdProfileQuery = publicWebIdProfileQuery
+  .match('?person', space.preferencesFile)
+  .o('?preferencesFile')
+  .add()
+  .match('?person', solid.privateTypeIndex)
+  .o('?privateTypeIndex')
+  .match('?person', ldp.inbox)
+  .o('?inbox')
